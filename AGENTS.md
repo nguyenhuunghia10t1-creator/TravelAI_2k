@@ -231,6 +231,7 @@ KHÔNG đề xuất / tự ý implement:
 - iOS / cross-platform
 - Push notification
 - In-app purchases
+- Sau mỗi task hoàn thành → append vào SESSION_NOTE.md ngay.
 
 ---
 
