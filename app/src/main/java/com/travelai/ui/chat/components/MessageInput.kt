@@ -3,25 +3,30 @@ package com.travelai.ui.chat.components
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.travelai.ui.theme.TravelAITheme
 
 @Composable
-fun MessageInput(modifier: Modifier = Modifier) {
-    var message by rememberSaveable { mutableStateOf("") }
+fun MessageInput(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onSend: () -> Unit,
+    isLoading: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val canSend = value.isNotBlank() && !isLoading
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -33,17 +38,29 @@ fun MessageInput(modifier: Modifier = Modifier) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             OutlinedTextField(
-                value = message,
-                onValueChange = { message = it },
+                value = value,
+                onValueChange = onValueChange,
                 modifier = Modifier
                     .weight(1f)
                     .padding(end = 8.dp),
                 placeholder = { Text("Nhập tin nhắn...") },
-                singleLine = true
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                keyboardActions = KeyboardActions(
+                    onSend = {
+                        if (canSend) {
+                            onSend()
+                        }
+                    }
+                )
             )
             Button(
-                onClick = {},
-                enabled = message.isNotBlank()
+                onClick = {
+                    if (canSend) {
+                        onSend()
+                    }
+                },
+                enabled = canSend
             ) {
                 Text("Gửi")
             }
@@ -55,6 +72,11 @@ fun MessageInput(modifier: Modifier = Modifier) {
 @Composable
 private fun MessageInputPreview() {
     TravelAITheme {
-        MessageInput()
+        MessageInput(
+            value = "Gợi ý 3 ngày Đà Nẵng",
+            onValueChange = {},
+            onSend = {},
+            isLoading = false
+        )
     }
 }

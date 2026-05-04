@@ -125,6 +125,10 @@ app/src/main/java/com/travelai/
 - ✅ Dùng Material3 components (`FilledTextField`, `ElevatedCard`, etc.).
 - ✅ Preview mọi Composable với `@Preview`.
 - ✅ Khi thêm dependency, justify trong commit message.
+- ✅ Sau khi hoàn thành task, tự động:
+   1. Đổi `[ ]` → `[x]` cho task đó trong TASKS.md
+   2. Append vào SESSION_NOTE.md: ngày, task ID, files đã làm, vấn đề gặp
+   3. Nếu có gotcha mới → thêm vào AGENTS.md section 9
 
 ### DON'T
 - ❌ KHÔNG hardcode API key trong source code — luôn dùng `local.properties`.
@@ -241,3 +245,19 @@ KHÔNG đề xuất / tự ý implement:
 - Chốt decision mới → thêm vào "Architecture decisions" với ID `AD-XXX`.
 - Thêm tech mới → update "Tech stack" + lý do.
 - Thay convention → update section 5 + commit rõ.
+
+## 14. Quy trình mỗi phiên làm việc
+
+### Khi bắt đầu session mới:
+1. Đọc SESSION_NOTE.md để biết đã làm gì
+2. Đọc TASKS.md để xác định task tiếp theo (task [ ] đầu tiên)
+3. Đọc AGENTS.md section 9 (Gotchas) để tránh bug cũ
+
+### Khi kết thúc task:
+1. Tick [x] trong TASKS.md
+2. Append SESSION_NOTE.md
+3. Update AGENTS.md nếu có decision/gotcha mới
+4. Commit: `git add . && git commit -m "feat: mô tả (TASK-XXX)"`
+
+### Khi bắt đầu task mới trong cùng session:
+- Đọc lại task description + acceptance criteria trước khi code

@@ -8,7 +8,7 @@
 
 ### Milestone 1: Walking Skeleton (Hôm nay)
 
-- [ ] **TASK-001** — App scaffold + màn hình chat rỗng + build được
+- [x] **TASK-001** — App scaffold + màn hình chat rỗng + build được
   - **Why:** Có cái gì đó chạy được trước khi thêm logic.
   - **What:** Tạo Android project (Kotlin + Compose), cấu hình Hilt, màn hình
     ChatScreen rỗng với TopAppBar và ô input ở dưới.
@@ -21,7 +21,7 @@
   - **Out of scope:** Chưa gọi API, chưa có logic gì
   - **Estimated AI turns:** 3–5
 
-- [ ] **TASK-002** — Kết nối DeepSeek API + hiện response trong chat
+- [x] **TASK-002** — Kết nối DeepSeek API + hiện response trong chat
   - **Why:** Core value của app — AI phải trả lời được.
   - **What:** Setup Retrofit + DeepSeekApi interface, ChatViewModel gọi API,
     messages list hiện trong LazyColumn với chat bubble user/assistant.
@@ -39,7 +39,7 @@
 
 ### Milestone 2: Core Features
 
-- [ ] **TASK-003** — System prompt + conversation context (multi-turn)
+- [x] **TASK-003** — System prompt + conversation context (multi-turn)
   - **Why:** Hiện tại mỗi message là độc lập — AI không nhớ context trước.
   - **What:** Gửi toàn bộ conversation history kèm system prompt du lịch
     vào mỗi API call.
@@ -52,7 +52,7 @@
   - **Depends:** TASK-002
   - **Estimated AI turns:** 3–5
 
-- [ ] **TASK-004** — Room DB: lưu và load lịch sử chat
+- [x] **TASK-004** — Room DB: lưu và load lịch sử chat
   - **Why:** User tắt app rồi mở lại cần thấy lại lịch trình đã tạo.
   - **What:** Setup Room DB, ChatSession + ChatMessage entities, DAO,
     Repository. ViewModel save message sau mỗi turn, load khi mở app.
@@ -65,7 +65,7 @@
   - **Depends:** TASK-002
   - **Estimated AI turns:** 5–8
 
-- [ ] **TASK-005** — Màn hình lịch sử chuyến đi
+- [x] **TASK-005** — Màn hình lịch sử chuyến đi
   - **Why:** User muốn xem lại các chuyến đã plan.
   - **What:** HistoryScreen hiện danh sách ChatSession, tap vào mở lại
     cuộc chat đó. Navigation giữa ChatScreen ↔ HistoryScreen.
@@ -80,21 +80,21 @@
 
 ### Milestone 3: Polish
 
-- [ ] **TASK-006** — Empty states + Loading states đúng chỗ
+- [x] **TASK-006** — Empty states + Loading states đúng chỗ
   - **Touches:** `ChatScreen.kt`, `HistoryScreen.kt`
   - **Acceptance:**
     - ✓ Chat mới mở: hiện placeholder "Hỏi tôi về chuyến đi của bạn..."
     - ✓ History rỗng: hiện illustration + text gợi ý tạo chuyến đầu tiên
     - ✓ Loading: shimmer hoặc CircularProgressIndicator, không blank screen
 
-- [ ] **TASK-007** — Error boundaries + Retry
+- [x] **TASK-007** — Error boundaries + Retry
   - **Touches:** `ChatViewModel.kt`, `ChatScreen.kt`
   - **Acceptance:**
     - ✓ API timeout (>15s) → hiện "Không phản hồi, thử lại?" + Retry button
     - ✓ HTTP 4xx/5xx → hiện message lỗi cụ thể, không crash
     - ✓ No internet → detect offline, hiện banner
 
-- [ ] **TASK-008** — Share lịch trình
+- [x] **TASK-008** — Share lịch trình
   - **Touches:** `ChatScreen.kt`
   - **Acceptance:**
     - ✓ Long-press vào message AI → copy text
@@ -102,13 +102,13 @@
 
 ### Milestone 4: Ship
 
-- [ ] **TASK-009** — Production config + API key management
+- [x] **TASK-009** — Production config + API key management
   - **Acceptance:**
     - ✓ `local.properties` có trong `.gitignore`
     - ✓ `BuildConfig.DEEPSEEK_API_KEY` inject đúng cách
     - ✓ Release build signed được
 
-- [ ] **TASK-010** — Smoke test + README
+- [x] **TASK-010** — Smoke test + README
   - **Acceptance:**
     - ✓ Clone repo → follow README → build thành công trong < 10 phút
     - ✓ 5 luồng chính test thủ công pass trên điện thoại thật
