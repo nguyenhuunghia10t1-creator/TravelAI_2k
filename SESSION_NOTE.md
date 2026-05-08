@@ -122,3 +122,14 @@
 - Initial sandbox build failed because the sandbox could not access Kotlin daemon temp files and Android SDK `android.jar`; reran Gradle outside the sandbox with Android Studio JBR and repo-local `GRADLE_USER_HOME`.
 - Verified `clean assembleDebug` passed and `app/build/outputs/apk/debug/app-debug.apk` exists.
 - Manual phone smoke test was not run by Codex; README now includes the checklist for the user to run on a real device.
+
+# 2026-05-08 - TASK-011 Foundation privacy and Room schema baseline
+
+- Added TravelAI V2 tasks `TASK-011` through `TASK-018` to `TASKS.md`.
+- Fixed the stale instrumented test package/assertion from `com.midterm.myapplication6` to `com.travelai`.
+- Disabled app backup by default and added explicit backup/data-extraction exclusions for database/shared preferences.
+- Enabled Room schema export and generated `app/schemas/com.travelai.data.db.AppDatabase/1.json`.
+- Updated `AGENTS.md` with AD-006: local Room/chat data is not backed up to cloud by default.
+- Files edited: `TASKS.md`, `AGENTS.md`, `app/build.gradle.kts`, `AndroidManifest.xml`, `backup_rules.xml`, `data_extraction_rules.xml`, `AppDatabase.kt`, `ExampleInstrumentedTest.kt`.
+- Files created: `app/schemas/com.travelai.data.db.AppDatabase/1.json`.
+- Verified `:app:assembleDebug`, `:app:testDebugUnitTest`, and `:app:lintDebug` passed using Android Studio JBR.

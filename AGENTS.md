@@ -166,6 +166,8 @@ app/src/main/java/com/travelai/
   đủ cho MVP. Thêm sau nếu UX cần.
 - **AD-004:** Hilt cho DI — standard Android, AI training data nhiều, ít bug.
 - **AD-005:** Không làm Google Maps và GPS trong v1 — scope creep, làm sau.
+- **AD-006:** Dữ liệu local/Room không backup cloud mặc định — app local-only,
+  lịch sử chat là dữ liệu riêng tư nên `allowBackup=false` và backup rules exclude DB.
 
 ---
 

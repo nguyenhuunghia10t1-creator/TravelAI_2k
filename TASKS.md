@@ -114,6 +114,89 @@
     - ✓ 5 luồng chính test thủ công pass trên điện thoại thật
     - ✓ README có: setup steps, how to add API key, how to build
 
+### Milestone 5: TravelAI V2 - Trip planning
+
+- [x] **TASK-011** — Foundation: test package, privacy backup, Room schema baseline
+  - **Why:** Trước khi thêm nhiều bảng mới, cần sửa các rủi ro nền tảng đã phát hiện.
+  - **What:** Sửa package test cũ sang `com.travelai`, chặn backup cloud mặc định cho dữ liệu chat local, bật Room schema export và chuẩn bị migration baseline.
+  - **Touches:** `ExampleInstrumentedTest.kt`, `AndroidManifest.xml`, `backup_rules.xml`, `data_extraction_rules.xml`, `AppDatabase.kt`, `app/build.gradle.kts`
+  - **Acceptance:**
+    - [x] Instrumented test assert đúng `com.travelai`
+    - [x] Room schema được export ra thư mục repo-local
+    - [x] Room/local chat DB không bị cloud backup mặc định
+    - [x] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
+
+- [ ] **TASK-012** — Trip planner form
+  - **Why:** User cần nhập thông tin chuyến đi có cấu trúc thay vì chỉ chat tự do.
+  - **What:** Thêm `TripPlannerScreen` cho điểm đến, số ngày, ngân sách, số người, phong cách, phương tiện, ghi chú.
+  - **Touches:** `TripPlannerScreen.kt`, `TripPlannerViewModel.kt`, `NavGraph.kt`, `ChatScreen.kt`
+  - **Acceptance:**
+    - [ ] Có route `planner`
+    - [ ] User nhập form và bấm tạo lịch trình
+    - [ ] Form validate các trường quan trọng, không crash khi bỏ trống optional
+    - [ ] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
+
+- [ ] **TASK-013** — Trip profile prompt integration
+  - **Why:** DeepSeek cần nhận thông tin chuyến đi có cấu trúc để lập lịch trình sát nhu cầu.
+  - **What:** Tích hợp trip profile vào prompt, tạo session từ form, lưu trip profile local, vẫn chat tiếp multi-turn.
+  - **Touches:** `ChatViewModel.kt`, `ChatRepository.kt`, `ChatDao.kt`, `TripProfile.kt`, `Constants.kt`
+  - **Acceptance:**
+    - [ ] User tạo chuyến đi từ form -> AI trả lịch trình theo đúng thông tin
+    - [ ] Session title ưu tiên điểm đến / số ngày từ trip profile
+    - [ ] Mở lại session vẫn chat tiếp được
+    - [ ] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
+
+- [ ] **TASK-014** — Structured itinerary parser and storage
+  - **Why:** Lịch trình nên được hiển thị theo ngày/buổi, không chỉ là text chat.
+  - **What:** Thêm parser cho `Ngày X`, `Sáng`, `Chiều`, `Tối`, lưu raw response và parsed snapshot local.
+  - **Touches:** `ItineraryParser.kt`, `TripPlanSnapshot.kt`, `ChatRepository.kt`, `ChatViewModel.kt`, `AppDatabase.kt`
+  - **Acceptance:**
+    - [ ] Parse được lịch trình 3 ngày Đà Nẵng theo ngày/buổi
+    - [ ] Lưu snapshot và load lại theo session
+    - [ ] Nếu parser không nhận diện được thì fallback raw text
+    - [ ] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
+
+- [ ] **TASK-015** — Itinerary UI
+  - **Why:** UI cần làm lịch trình dễ đọc và khác chatbot thường.
+  - **What:** Thêm route `itinerary/{sessionId}` và UI card/tab theo ngày, kèm fallback chat text.
+  - **Touches:** `ItineraryScreen.kt`, `ItineraryViewModel.kt`, `NavGraph.kt`, `HistoryScreen.kt`, `ChatScreen.kt`
+  - **Acceptance:**
+    - [ ] Từ chat/history mở được itinerary của session
+    - [ ] Hiển thị Ngày/Sáng/Chiều/Tối rõ ràng
+    - [ ] Session chưa có parsed itinerary vẫn hiển thị raw response
+    - [ ] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
+
+- [ ] **TASK-016** — Budget planner
+  - **Why:** Ngân sách là yếu tố đặc trưng của trợ lý du lịch tự túc.
+  - **What:** Thêm budget item local cho ăn uống, di chuyển, vé tham quan, khách sạn, phát sinh và tổng dự kiến.
+  - **Touches:** `BudgetItem.kt`, `BudgetSection.kt`, `ChatRepository.kt`, `ItineraryScreen.kt`
+  - **Acceptance:**
+    - [ ] Budget gắn với session
+    - [ ] User thêm/sửa/xóa budget item
+    - [ ] Tổng chi phí tự cập nhật và lưu qua restart
+    - [ ] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
+
+- [ ] **TASK-017** — Travel checklist
+  - **Why:** Checklist giúp app hữu ích sau khi đã lập lịch trình.
+  - **What:** Thêm checklist chuẩn bị du lịch local-only, có checkbox lưu trạng thái theo session.
+  - **Touches:** `ChecklistItem.kt`, `ChecklistSection.kt`, `ChatRepository.kt`, `ItineraryScreen.kt`
+  - **Acceptance:**
+    - [ ] Checklist gắn với session
+    - [ ] User thêm/xóa/tick item
+    - [ ] Trạng thái checkbox lưu qua restart
+    - [ ] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
+
+- [ ] **TASK-018** — Trip Library and polished export
+  - **Why:** History cần trở thành nơi quản lý chuyến đi thật sự.
+  - **What:** Nâng History thành Trip Library với search, rename, delete, pin/favorite, và share/export lịch trình sạch hơn.
+  - **Touches:** `HistoryScreen.kt`, `HistoryViewModel.kt`, `ChatRepository.kt`, `ChatDao.kt`, `ChatScreen.kt`
+  - **Acceptance:**
+    - [ ] Search chuyến đi theo title
+    - [ ] Rename/delete/pin session
+    - [ ] Share/export bỏ lớp chat thô và ưu tiên itinerary
+    - [ ] Smoke test luồng planner -> chat -> itinerary -> budget/checklist -> library pass
+    - [ ] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
+
 ---
 
 ## Backlog (chưa schedule)

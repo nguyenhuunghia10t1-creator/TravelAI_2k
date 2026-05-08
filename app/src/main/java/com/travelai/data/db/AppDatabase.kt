@@ -11,7 +11,7 @@ import com.travelai.data.db.entities.ChatSessionEntity
         ChatMessageEntity::class
     ],
     version = 1,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun chatDao(): ChatDao
