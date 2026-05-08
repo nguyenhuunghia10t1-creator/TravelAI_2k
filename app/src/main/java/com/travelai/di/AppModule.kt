@@ -40,7 +40,7 @@ object AppModule {
         AppDatabase::class.java,
         "travelai.db"
     )
-        .addMigrations(MIGRATION_1_2)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
         .build()
 
     @Provides
@@ -61,6 +61,24 @@ object AppModule {
                     `transport` TEXT NOT NULL,
                     `note` TEXT NOT NULL,
                     `createdAt` INTEGER NOT NULL,
+                    PRIMARY KEY(`sessionId`),
+                    FOREIGN KEY(`sessionId`) REFERENCES `chat_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+        }
+    }
+
+    private val MIGRATION_2_3 = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `trip_plan_snapshots` (
+                    `sessionId` INTEGER NOT NULL,
+                    `rawResponse` TEXT NOT NULL,
+                    `parsedJson` TEXT,
+                    `createdAt` INTEGER NOT NULL,
+                    `updatedAt` INTEGER NOT NULL,
                     PRIMARY KEY(`sessionId`),
                     FOREIGN KEY(`sessionId`) REFERENCES `chat_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
                 )

@@ -1,14 +1,19 @@
 package com.travelai.data.repository
 
+import com.google.gson.Gson
 import com.travelai.data.api.DeepSeekApi
 import com.travelai.data.api.DeepSeekChatRequest
 import com.travelai.data.api.DeepSeekMessage
 import com.travelai.data.db.ChatDao
 import com.travelai.data.db.entities.ChatMessageEntity
 import com.travelai.data.db.entities.ChatSessionEntity
+import com.travelai.data.db.entities.TripPlanSnapshotEntity
 import com.travelai.data.db.entities.TripProfileEntity
+import com.travelai.data.model.TripPlanDay
+import com.travelai.data.model.TripPlanSnapshot
 import com.travelai.data.model.TripProfile
 import com.travelai.data.model.toSessionTitle
+import com.travelai.data.parser.ItineraryParser
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -17,6 +22,8 @@ class ChatRepository @Inject constructor(
     private val chatDao: ChatDao,
     @Named("DeepSeekApiKey") private val apiKey: String
 ) {
+    private val gson = Gson()
+
     suspend fun loadLatestSession(): StoredChatSession? {
         val session = chatDao.getLatestSession() ?: return null
         return loadSessionFromEntity(session)
@@ -40,6 +47,7 @@ class ChatRepository @Inject constructor(
     private suspend fun loadSessionFromEntity(session: ChatSessionEntity): StoredChatSession {
         val messages = chatDao.getMessagesForSession(session.id)
         val tripProfile = chatDao.getTripProfile(session.id)
+        val tripPlanSnapshot = chatDao.getTripPlanSnapshot(session.id)
 
         return StoredChatSession(
             id = session.id,
@@ -47,6 +55,7 @@ class ChatRepository @Inject constructor(
             createdAt = session.createdAt,
             updatedAt = session.updatedAt,
             tripProfile = tripProfile?.toTripProfile(),
+            tripPlanSnapshot = tripPlanSnapshot?.toTripPlanSnapshot(gson),
             messages = messages.map {
                 StoredChatMessage(
                     role = it.role,
@@ -92,6 +101,29 @@ class ChatRepository @Inject constructor(
             )
         )
         chatDao.updateSessionUpdatedAt(sessionId, now)
+    }
+
+    suspend fun saveTripPlanSnapshot(
+        sessionId: Long,
+        rawResponse: String,
+        keepRawWhenUnparsed: Boolean
+    ): TripPlanSnapshot? {
+        if (rawResponse.isBlank()) return null
+
+        val parsedDays = ItineraryParser.parseDays(rawResponse)
+        if (parsedDays.isEmpty() && !keepRawWhenUnparsed) return null
+
+        val now = System.currentTimeMillis()
+        val existingSnapshot = chatDao.getTripPlanSnapshot(sessionId)
+        val snapshot = TripPlanSnapshot(
+            sessionId = sessionId,
+            rawResponse = rawResponse,
+            days = parsedDays,
+            createdAt = existingSnapshot?.createdAt ?: now,
+            updatedAt = now
+        )
+        chatDao.upsertTripPlanSnapshot(snapshot.toEntity(gson))
+        return snapshot
     }
 
     suspend fun sendMessage(messages: List<DeepSeekMessage>): String {
@@ -163,6 +195,7 @@ data class StoredChatSession(
     val createdAt: Long,
     val updatedAt: Long,
     val tripProfile: TripProfile?,
+    val tripPlanSnapshot: TripPlanSnapshot?,
     val messages: List<StoredChatMessage>
 )
 
@@ -177,4 +210,35 @@ data class StoredChatMessage(
     val role: String,
     val content: String,
     val createdAt: Long
+)
+
+private fun TripPlanSnapshotEntity.toTripPlanSnapshot(gson: Gson): TripPlanSnapshot =
+    TripPlanSnapshot(
+        sessionId = sessionId,
+        rawResponse = rawResponse,
+        days = parsedDays(gson),
+        createdAt = createdAt,
+        updatedAt = updatedAt
+    )
+
+private fun TripPlanSnapshotEntity.parsedDays(gson: Gson): List<TripPlanDay> {
+    val json = parsedJson?.takeIf { it.isNotBlank() } ?: return emptyList()
+    return runCatching {
+        gson.fromJson(json, TripPlanSnapshotPayload::class.java)?.days.orEmpty()
+    }.getOrDefault(emptyList())
+}
+
+private fun TripPlanSnapshot.toEntity(gson: Gson): TripPlanSnapshotEntity =
+    TripPlanSnapshotEntity(
+        sessionId = sessionId,
+        rawResponse = rawResponse,
+        parsedJson = days.takeIf { it.isNotEmpty() }?.let { parsedDays ->
+            gson.toJson(TripPlanSnapshotPayload(days = parsedDays))
+        },
+        createdAt = createdAt,
+        updatedAt = updatedAt
+    )
+
+private data class TripPlanSnapshotPayload(
+    val days: List<TripPlanDay>
 )

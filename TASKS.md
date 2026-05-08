@@ -146,15 +146,15 @@
     - [x] Mở lại session vẫn chat tiếp được
     - [x] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
 
-- [ ] **TASK-014** — Structured itinerary parser and storage
+- [x] **TASK-014** — Structured itinerary parser and storage
   - **Why:** Lịch trình nên được hiển thị theo ngày/buổi, không chỉ là text chat.
   - **What:** Thêm parser cho `Ngày X`, `Sáng`, `Chiều`, `Tối`, lưu raw response và parsed snapshot local.
   - **Touches:** `ItineraryParser.kt`, `TripPlanSnapshot.kt`, `ChatRepository.kt`, `ChatViewModel.kt`, `AppDatabase.kt`
   - **Acceptance:**
-    - [ ] Parse được lịch trình 3 ngày Đà Nẵng theo ngày/buổi
-    - [ ] Lưu snapshot và load lại theo session
-    - [ ] Nếu parser không nhận diện được thì fallback raw text
-    - [ ] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
+    - [x] Parse được lịch trình 3 ngày Đà Nẵng theo ngày/buổi
+    - [x] Lưu snapshot và load lại theo session
+    - [x] Nếu parser không nhận diện được thì fallback raw text
+    - [x] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
 
 - [ ] **TASK-015** — Itinerary UI
   - **Why:** UI cần làm lịch trình dễ đọc và khác chatbot thường.

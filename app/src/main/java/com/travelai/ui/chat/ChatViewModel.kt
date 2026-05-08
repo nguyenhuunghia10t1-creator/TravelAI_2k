@@ -7,6 +7,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.travelai.data.api.DeepSeekMessage
+import com.travelai.data.model.TripPlanSnapshot
 import com.travelai.data.model.TripProfile
 import com.travelai.data.model.toInitialPrompt
 import com.travelai.data.model.toPromptContext
@@ -118,9 +119,11 @@ class ChatViewModel @Inject constructor(
                 )
 
                 val deepSeekMessages = buildDeepSeekMessages(updatedMessages)
+                val keepRawSnapshotWhenUnparsed = shouldKeepRawSnapshotWhenUnparsed(updatedMessages)
                 retryCandidate = PendingRetry(
                     sessionId = sessionId,
-                    messages = deepSeekMessages
+                    messages = deepSeekMessages,
+                    keepRawSnapshotWhenUnparsed = keepRawSnapshotWhenUnparsed
                 )
 
                 val response = requestAssistantResponse(deepSeekMessages)
@@ -129,6 +132,11 @@ class ChatViewModel @Inject constructor(
                     role = ROLE_ASSISTANT,
                     content = response
                 )
+                val tripPlanSnapshot = saveTripPlanSnapshotIfUseful(
+                    sessionId = sessionId,
+                    rawResponse = response,
+                    keepRawWhenUnparsed = keepRawSnapshotWhenUnparsed
+                )
 
                 _uiState.update {
                     it.copy(
@@ -136,6 +144,7 @@ class ChatViewModel @Inject constructor(
                             role = ChatRole.ASSISTANT,
                             content = response
                         ),
+                        tripPlanSnapshot = tripPlanSnapshot ?: it.tripPlanSnapshot,
                         isLoading = false,
                         errorMessage = null,
                         canRetry = false,
@@ -183,6 +192,11 @@ class ChatViewModel @Inject constructor(
                     role = ROLE_ASSISTANT,
                     content = response
                 )
+                val tripPlanSnapshot = saveTripPlanSnapshotIfUseful(
+                    sessionId = retry.sessionId,
+                    rawResponse = response,
+                    keepRawWhenUnparsed = retry.keepRawSnapshotWhenUnparsed
+                )
 
                 _uiState.update {
                     it.copy(
@@ -190,6 +204,7 @@ class ChatViewModel @Inject constructor(
                             role = ChatRole.ASSISTANT,
                             content = response
                         ),
+                        tripPlanSnapshot = tripPlanSnapshot ?: it.tripPlanSnapshot,
                         isLoading = false,
                         errorMessage = null,
                         canRetry = false,
@@ -227,6 +242,7 @@ class ChatViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             messages = loadedMessages,
+                            tripPlanSnapshot = session.tripPlanSnapshot,
                             errorMessage = null,
                             canRetry = false,
                             offlineBannerMessage = null
@@ -263,6 +279,16 @@ class ChatViewModel @Inject constructor(
         withTimeout(API_RESPONSE_TIMEOUT_MS) {
             chatRepository.sendMessage(messages)
         }
+
+    private suspend fun saveTripPlanSnapshotIfUseful(
+        sessionId: Long,
+        rawResponse: String,
+        keepRawWhenUnparsed: Boolean
+    ): TripPlanSnapshot? = chatRepository.saveTripPlanSnapshot(
+        sessionId = sessionId,
+        rawResponse = rawResponse,
+        keepRawWhenUnparsed = keepRawWhenUnparsed
+    )
 
     private fun handleSendFailure(
         throwable: Throwable,
@@ -323,6 +349,11 @@ class ChatViewModel @Inject constructor(
 
         return keptReversed.asReversed()
     }
+
+    private fun shouldKeepRawSnapshotWhenUnparsed(messages: List<ChatMessage>): Boolean =
+        currentTripProfile != null &&
+            messages.count { it.role == ChatRole.USER } == 1 &&
+            messages.none { it.role == ChatRole.ASSISTANT }
 
     private fun ChatMessage.toDeepSeekMessage(): DeepSeekMessage = DeepSeekMessage(
         role = when (role) {
@@ -391,6 +422,7 @@ class ChatViewModel @Inject constructor(
 
 data class ChatUiState(
     val messages: List<ChatMessage> = emptyList(),
+    val tripPlanSnapshot: TripPlanSnapshot? = null,
     val inputText: String = "",
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
@@ -410,7 +442,8 @@ enum class ChatRole {
 
 private data class PendingRetry(
     val sessionId: Long,
-    val messages: List<DeepSeekMessage>
+    val messages: List<DeepSeekMessage>,
+    val keepRawSnapshotWhenUnparsed: Boolean
 )
 
 private data class ChatError(

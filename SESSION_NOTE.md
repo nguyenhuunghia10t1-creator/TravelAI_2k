@@ -159,3 +159,15 @@
 - Files created: `TripProfile.kt`, `TripProfileEntity.kt`, `TripProfileTest.kt`, `app/schemas/com.travelai.data.db.AppDatabase/2.json`.
 - Files removed: `TripPlannerViewModelTest.kt`.
 - Verified `:app:assembleDebug`, `:app:testDebugUnitTest`, and `:app:lintDebug` passed using Android Studio JBR.
+
+# 2026-05-08 - TASK-014 Structured itinerary parser and storage
+
+- Added `TripPlanSnapshot` domain model for raw assistant response plus parsed itinerary days/periods.
+- Added `ItineraryParser` for `Ngày X`, `Sáng`, `Chiều`, and `Tối`, including fallback behavior when output cannot be parsed.
+- Added `TripPlanSnapshotEntity`, Room database version 3, migration `MIGRATION_2_3`, and exported schema `app/schemas/com.travelai.data.db.AppDatabase/3.json`.
+- Extended `ChatDao` and `ChatRepository` to save/load itinerary snapshots per session while preserving raw response text.
+- Updated `ChatViewModel` to save a snapshot after assistant responses; the initial planner response keeps raw fallback even if parser fails, later non-itinerary chat does not overwrite an existing parsed snapshot.
+- Added `ItineraryParserTest` covering a 3-day Da Nang itinerary, multiline period bodies, and raw-text fallback.
+- Files edited: `TASKS.md`, `AGENTS.md`, `AppDatabase.kt`, `ChatDao.kt`, `ChatRepository.kt`, `AppModule.kt`, `ChatViewModel.kt`.
+- Files created: `TripPlanSnapshot.kt`, `ItineraryParser.kt`, `TripPlanSnapshotEntity.kt`, `ItineraryParserTest.kt`, `app/schemas/com.travelai.data.db.AppDatabase/3.json`.
+- Verified `:app:assembleDebug`, `:app:testDebugUnitTest`, and `:app:lintDebug` passed using Android Studio JBR.
