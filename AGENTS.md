@@ -68,7 +68,7 @@ app/src/main/java/com/travelai/
 │   │   ├── DeepSeekModels.kt      # data class Request, Response, Message, Choice
 │   │   └── ApiClient.kt           # OkHttp singleton + Retrofit builder
 │   ├── db/
-│   │   ├── AppDatabase.kt         # Room @Database, version 5
+│   │   ├── AppDatabase.kt         # Room @Database, version 6
 │   │   ├── ChatDao.kt             # @Dao queries
 │   │   └── entities/
 │   │       ├── ChatSession.kt     # @Entity
@@ -81,7 +81,8 @@ app/src/main/java/com/travelai/
 │   │   ├── TripProfile.kt         # Domain model + prompt helpers cho planner
 │   │   ├── TripPlanSnapshot.kt    # Domain model itinerary theo ngày/buổi
 │   │   ├── BudgetItem.kt          # Domain model + helpers cho budget planner
-│   │   └── ChecklistItem.kt       # Domain model + helpers cho travel checklist
+│   │   ├── ChecklistItem.kt       # Domain model + helpers cho travel checklist
+│   │   └── TripExport.kt          # Format share/export sạch từ itinerary + budget/checklist
 │   ├── parser/
 │   │   └── ItineraryParser.kt     # Parser output AI: Ngày X / Sáng / Chiều / Tối
 │   └── repository/
@@ -94,7 +95,7 @@ app/src/main/java/com/travelai/
 │   │       ├── ChatBubble.kt      # user bubble (right) / AI bubble (left)
 │   │       └── MessageInput.kt    # TextField + Send button
 │   ├── history/
-│   │   ├── HistoryScreen.kt
+│   │   ├── HistoryScreen.kt       # Trip Library: search/rename/delete/pin/export session
 │   │   └── HistoryViewModel.kt
 │   ├── itinerary/
 │   │   ├── ItineraryScreen.kt     # UI lịch trình theo tab ngày + raw fallback
@@ -103,6 +104,8 @@ app/src/main/java/com/travelai/
 │   │   └── ChecklistSection.kt    # UI thêm/xóa/tick checklist item
 │   ├── navigation/
 │   │   └── NavGraph.kt            # NavHost, routes: "planner", "chat", "history", "itinerary/{sessionId}"
+│   ├── share/
+│   │   └── TripShare.kt           # Android ACTION_SEND helper cho export text
 │   └── theme/
 │       └── Theme.kt               # MaterialTheme, colors, typography
 ├── di/
@@ -170,6 +173,12 @@ app/src/main/java/com/travelai/
   `TripPlanSnapshotEntity` local để giữ raw response và parsed snapshot khi parser nhận diện được.
 - **Budget item** — khoản chi dự kiến local-only theo `sessionId`, có category,
   title, amount VND, note; dùng trong `ItineraryScreen`.
+- **Checklist item** — việc chuẩn bị du lịch local-only theo `sessionId`, có
+  checkbox `isChecked` và lưu trạng thái qua Room.
+- **Trip Library** — `HistoryScreen` nâng cấp để quản lý session: search theo
+  title, rename, delete, pin/favorite và export lịch trình.
+- **Trip export** — text chia sẻ sạch, ưu tiên `TripPlanSnapshot` đã parse, kèm
+  trip profile/budget/checklist; không dump từng bubble chat thô.
 - **System prompt** — instruction gửi kèm mỗi API call để AI "biết" mình là
   trợ lý du lịch. Xem `Constants.kt`.
 - **Conversation history** — toàn bộ messages trong session, gửi lên DeepSeek
@@ -205,6 +214,9 @@ app/src/main/java/com/travelai/
   (vd: `listOf()` inline) — sẽ trigger recompose liên tục. Dùng `remember {}`.
 - ⚠️ **local.properties:** file này KHÔNG được commit. Người clone repo mới
   phải tự tạo và thêm `DEEPSEEK_API_KEY=sk-...`.
+- ⚠️ **Windows Gradle/lint cache lock:** nếu `:app:lintDebug` hoặc `clean` báo
+  file trong `app/build/intermediates/lint-cache` đang bị process khác giữ, chạy
+  `gradlew --stop` cho cả Gradle home đang dùng rồi retry; không xóa source.
 
 ---
 

@@ -223,6 +223,44 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    fun shareCurrentSession() {
+        val sessionId = currentSessionId ?: _uiState.value.sessionId ?: return
+        if (_uiState.value.isSharing) return
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isSharing = true,
+                    errorMessage = null
+                )
+            }
+
+            runCatching {
+                chatRepository.createTripExportText(sessionId)
+                    ?.takeIf { it.isNotBlank() }
+                    ?: throw IllegalStateException("Chưa có nội dung để chia sẻ.")
+            }.onSuccess { shareText ->
+                _uiState.update {
+                    it.copy(
+                        shareText = shareText,
+                        isSharing = false
+                    )
+                }
+            }.onFailure { throwable ->
+                _uiState.update {
+                    it.copy(
+                        isSharing = false,
+                        errorMessage = throwable.message ?: "Không thể tạo nội dung chia sẻ."
+                    )
+                }
+            }
+        }
+    }
+
+    fun consumeShareText() {
+        _uiState.update { it.copy(shareText = null) }
+    }
+
     private fun loadInitialSession() {
         viewModelScope.launch {
             runCatching {
@@ -432,7 +470,9 @@ data class ChatUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val canRetry: Boolean = false,
-    val offlineBannerMessage: String? = null
+    val offlineBannerMessage: String? = null,
+    val shareText: String? = null,
+    val isSharing: Boolean = false
 )
 
 data class ChatMessage(

@@ -16,7 +16,7 @@ interface ChatDao {
     @Query("SELECT * FROM chat_sessions ORDER BY updatedAt DESC LIMIT 1")
     suspend fun getLatestSession(): ChatSessionEntity?
 
-    @Query("SELECT * FROM chat_sessions ORDER BY updatedAt DESC")
+    @Query("SELECT * FROM chat_sessions ORDER BY isPinned DESC, updatedAt DESC")
     suspend fun getSessions(): List<ChatSessionEntity>
 
     @Query("SELECT * FROM chat_sessions WHERE id = :sessionId LIMIT 1")
@@ -99,4 +99,20 @@ interface ChatDao {
 
     @Query("UPDATE chat_sessions SET updatedAt = :updatedAt WHERE id = :sessionId")
     suspend fun updateSessionUpdatedAt(sessionId: Long, updatedAt: Long)
+
+    @Query(
+        """
+        UPDATE chat_sessions
+        SET title = :title,
+            updatedAt = :updatedAt
+        WHERE id = :sessionId
+        """
+    )
+    suspend fun renameSession(sessionId: Long, title: String, updatedAt: Long)
+
+    @Query("UPDATE chat_sessions SET isPinned = :isPinned WHERE id = :sessionId")
+    suspend fun updateSessionPinned(sessionId: Long, isPinned: Boolean)
+
+    @Query("DELETE FROM chat_sessions WHERE id = :sessionId")
+    suspend fun deleteSession(sessionId: Long)
 }

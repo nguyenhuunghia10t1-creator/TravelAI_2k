@@ -18,7 +18,7 @@ import com.travelai.data.db.entities.TripProfileEntity
         BudgetItemEntity::class,
         ChecklistItemEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

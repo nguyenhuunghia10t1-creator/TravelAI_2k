@@ -15,24 +15,30 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.travelai.ui.share.shareTripText
 import com.travelai.ui.theme.TravelAITheme
 
 @Composable
@@ -42,13 +48,31 @@ fun HistoryScreen(
     onOpenItinerary: (Long) -> Unit,
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(uiState.shareText) {
+        uiState.shareText?.let { exportText ->
+            shareTripText(context, exportText)
+            viewModel.consumeShareText()
+        }
+    }
 
     HistoryScreenContent(
         uiState = uiState,
         onBack = onBack,
         onSessionClick = onSessionClick,
-        onOpenItinerary = onOpenItinerary
+        onOpenItinerary = onOpenItinerary,
+        onSearchQueryChange = viewModel::onSearchQueryChange,
+        onStartRename = viewModel::startRenameSession,
+        onRenameTitleChange = viewModel::onRenameTitleChange,
+        onConfirmRename = viewModel::confirmRenameSession,
+        onDismissRename = viewModel::dismissRenameSession,
+        onRequestDelete = viewModel::requestDeleteSession,
+        onConfirmDelete = viewModel::confirmDeleteSession,
+        onDismissDelete = viewModel::dismissDeleteSession,
+        onTogglePinned = viewModel::togglePinned,
+        onShareSession = viewModel::shareSession
     )
 }
 
@@ -58,64 +82,133 @@ private fun HistoryScreenContent(
     uiState: HistoryUiState,
     onBack: () -> Unit,
     onSessionClick: (Long) -> Unit,
-    onOpenItinerary: (Long) -> Unit
+    onOpenItinerary: (Long) -> Unit,
+    onSearchQueryChange: (String) -> Unit,
+    onStartRename: (HistorySession) -> Unit,
+    onRenameTitleChange: (String) -> Unit,
+    onConfirmRename: () -> Unit,
+    onDismissRename: () -> Unit,
+    onRequestDelete: (HistorySession) -> Unit,
+    onConfirmDelete: () -> Unit,
+    onDismissDelete: () -> Unit,
+    onTogglePinned: (HistorySession) -> Unit,
+    onShareSession: (HistorySession) -> Unit
 ) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("Lịch sử") },
+                title = { Text("Trip Library") },
                 navigationIcon = {
                     TextButton(onClick = onBack) {
-                        Text("Chat")
+                        Text("Quay lại")
                     }
                 }
             )
         }
     ) { innerPadding ->
-        when {
-            uiState.isLoading -> CenterContent(
-                modifier = Modifier.padding(innerPadding)
-            ) {
-                HistoryLoadingState()
-            }
-
-            uiState.errorMessage != null -> CenterContent(
-                modifier = Modifier.padding(innerPadding)
-            ) {
-                Text(
-                    text = uiState.errorMessage,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-
-            uiState.sessions.isEmpty() -> CenterContent(
-                modifier = Modifier.padding(innerPadding)
-            ) {
-                EmptyHistoryState()
-            }
-
-            else -> LazyColumn(
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp)
+        ) {
+            TripLibrarySearchField(
+                value = uiState.searchQuery,
+                onValueChange = onSearchQueryChange,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(
-                    items = uiState.sessions,
-                    key = { session -> session.id }
-                ) { session ->
-                    HistorySessionRow(
-                        session = session,
-                        onClick = { onSessionClick(session.id) },
-                        onOpenItinerary = { onOpenItinerary(session.id) }
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+            )
+
+            when {
+                uiState.isLoading -> CenterContent(modifier = Modifier.weight(1f)) {
+                    HistoryLoadingState()
+                }
+
+                uiState.errorMessage != null -> CenterContent(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = uiState.errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
                     )
+                }
+
+                uiState.sessions.isEmpty() && uiState.hasSearchQuery -> CenterContent(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    NoSearchResultsState(query = uiState.searchQuery)
+                }
+
+                uiState.sessions.isEmpty() -> CenterContent(modifier = Modifier.weight(1f)) {
+                    EmptyHistoryState()
+                }
+
+                else -> LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentPadding = PaddingValues(vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(
+                        items = uiState.sessions,
+                        key = { session -> session.id }
+                    ) { session ->
+                        HistorySessionRow(
+                            session = session,
+                            isSaving = uiState.isSavingSession,
+                            isSharing = uiState.sharingSessionId == session.id,
+                            onClick = { onSessionClick(session.id) },
+                            onOpenItinerary = { onOpenItinerary(session.id) },
+                            onStartRename = { onStartRename(session) },
+                            onRequestDelete = { onRequestDelete(session) },
+                            onTogglePinned = { onTogglePinned(session) },
+                            onShareSession = { onShareSession(session) }
+                        )
+                    }
                 }
             }
         }
     }
+
+    uiState.renamingSession?.let { session ->
+        RenameSessionDialog(
+            session = session,
+            title = uiState.renameTitle,
+            errorMessage = uiState.renameErrorMessage,
+            isSaving = uiState.isSavingSession,
+            onTitleChange = onRenameTitleChange,
+            onConfirm = onConfirmRename,
+            onDismiss = onDismissRename
+        )
+    }
+
+    uiState.deletingSession?.let { session ->
+        DeleteSessionDialog(
+            session = session,
+            isSaving = uiState.isSavingSession,
+            onConfirm = onConfirmDelete,
+            onDismiss = onDismissDelete
+        )
+    }
+}
+
+@Composable
+private fun TripLibrarySearchField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        singleLine = true,
+        label = { Text("Tìm chuyến đi") },
+        placeholder = { Text("Nhập tên chuyến đi") }
+    )
 }
 
 @Composable
@@ -129,7 +222,7 @@ private fun HistoryLoadingState(
     ) {
         CircularProgressIndicator()
         Text(
-            text = "Đang tải lịch sử...",
+            text = "Đang tải thư viện chuyến đi...",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center
@@ -148,12 +241,36 @@ private fun EmptyHistoryState(
     ) {
         EmptyHistoryIllustration()
         Text(
-            text = "Chưa có lịch sử chuyến đi",
+            text = "Chưa có chuyến đi nào",
             style = MaterialTheme.typography.titleMedium,
             textAlign = TextAlign.Center
         )
         Text(
-            text = "Hãy quay lại Chat và hỏi TravelAI về chuyến đi đầu tiên của bạn.",
+            text = "Tạo chuyến mới từ Planner để lưu lịch trình, ngân sách và checklist vào thư viện.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun NoSearchResultsState(
+    query: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "Không tìm thấy chuyến đi",
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center
+        )
+        Text(
+            text = "Không có title nào khớp với \"$query\".",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center
@@ -230,8 +347,14 @@ private fun EmptyHistoryIllustration(
 @Composable
 private fun HistorySessionRow(
     session: HistorySession,
+    isSaving: Boolean,
+    isSharing: Boolean,
     onClick: () -> Unit,
     onOpenItinerary: () -> Unit,
+    onStartRename: () -> Unit,
+    onRequestDelete: () -> Unit,
+    onTogglePinned: () -> Unit,
+    onShareSession: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     ElevatedCard(
@@ -243,14 +366,24 @@ private fun HistorySessionRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = session.title,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = session.title,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (session.isPinned) {
+                    PinnedBadge()
+                }
+            }
             Text(
                 text = session.createdAtText,
                 style = MaterialTheme.typography.bodyMedium,
@@ -266,9 +399,150 @@ private fun HistorySessionRow(
                 TextButton(onClick = onOpenItinerary) {
                     Text("Lịch trình")
                 }
+                TextButton(
+                    onClick = onShareSession,
+                    enabled = !isSharing
+                ) {
+                    Text(if (isSharing) "Đang xuất" else "Xuất")
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(
+                    onClick = onTogglePinned,
+                    enabled = !isSaving
+                ) {
+                    Text(if (session.isPinned) "Bỏ ghim" else "Ghim")
+                }
+                TextButton(
+                    onClick = onStartRename,
+                    enabled = !isSaving
+                ) {
+                    Text("Đổi tên")
+                }
+                TextButton(
+                    onClick = onRequestDelete,
+                    enabled = !isSaving
+                ) {
+                    Text(
+                        text = "Xóa",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }
+}
+
+@Composable
+private fun PinnedBadge(
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        shape = MaterialTheme.shapes.small
+    ) {
+        Text(
+            text = "Đã ghim",
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            style = MaterialTheme.typography.labelMedium
+        )
+    }
+}
+
+@Composable
+private fun RenameSessionDialog(
+    session: HistorySession,
+    title: String,
+    errorMessage: String?,
+    isSaving: Boolean,
+    onTitleChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Đổi tên chuyến đi") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = session.title,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = onTitleChange,
+                    singleLine = true,
+                    label = { Text("Tên mới") }
+                )
+                errorMessage?.let { message ->
+                    Text(
+                        text = message,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                enabled = !isSaving
+            ) {
+                Text("Lưu")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isSaving
+            ) {
+                Text("Hủy")
+            }
+        }
+    )
+}
+
+@Composable
+private fun DeleteSessionDialog(
+    session: HistorySession,
+    isSaving: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Xóa chuyến đi?") },
+        text = {
+            Text("Xóa \"${session.title}\" khỏi máy này. Tin nhắn, lịch trình, ngân sách và checklist sẽ bị xóa theo.")
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                enabled = !isSaving
+            ) {
+                Text(
+                    text = "Xóa",
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isSaving
+            ) {
+                Text("Hủy")
+            }
+        }
+    )
 }
 
 @Composable
@@ -293,14 +567,31 @@ private fun HistoryScreenPreview() {
                 sessions = listOf(
                     HistorySession(
                         id = 1L,
-                        title = "Gợi ý 3 ngày Đà Nẵng",
-                        createdAtText = "04/05/2026 14:30"
+                        title = "3 ngày Đà Nẵng",
+                        createdAtText = "04/05/2026 14:30",
+                        isPinned = true
+                    ),
+                    HistorySession(
+                        id = 2L,
+                        title = "2 ngày Hội An",
+                        createdAtText = "05/05/2026 09:15",
+                        isPinned = false
                     )
                 )
             ),
             onBack = {},
             onSessionClick = {},
-            onOpenItinerary = {}
+            onOpenItinerary = {},
+            onSearchQueryChange = {},
+            onStartRename = {},
+            onRenameTitleChange = {},
+            onConfirmRename = {},
+            onDismissRename = {},
+            onRequestDelete = {},
+            onConfirmDelete = {},
+            onDismissDelete = {},
+            onTogglePinned = {},
+            onShareSession = {}
         )
     }
 }
@@ -313,7 +604,17 @@ private fun EmptyHistoryScreenPreview() {
             uiState = HistoryUiState(),
             onBack = {},
             onSessionClick = {},
-            onOpenItinerary = {}
+            onOpenItinerary = {},
+            onSearchQueryChange = {},
+            onStartRename = {},
+            onRenameTitleChange = {},
+            onConfirmRename = {},
+            onDismissRename = {},
+            onRequestDelete = {},
+            onConfirmDelete = {},
+            onDismissDelete = {},
+            onTogglePinned = {},
+            onShareSession = {}
         )
     }
 }
@@ -326,7 +627,17 @@ private fun LoadingHistoryScreenPreview() {
             uiState = HistoryUiState(isLoading = true),
             onBack = {},
             onSessionClick = {},
-            onOpenItinerary = {}
+            onOpenItinerary = {},
+            onSearchQueryChange = {},
+            onStartRename = {},
+            onRenameTitleChange = {},
+            onConfirmRename = {},
+            onDismissRename = {},
+            onRequestDelete = {},
+            onConfirmDelete = {},
+            onDismissDelete = {},
+            onTogglePinned = {},
+            onShareSession = {}
         )
     }
 }

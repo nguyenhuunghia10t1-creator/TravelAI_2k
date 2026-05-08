@@ -208,3 +208,18 @@
 - Files created: `ChecklistItem.kt`, `ChecklistItemEntity.kt`, `ChecklistSection.kt`, `ChecklistItemTest.kt`, `app/schemas/com.travelai.data.db.AppDatabase/5.json`.
 - Initial sandbox Gradle build failed because the sandbox could not access `C:\Users\nguye\AppData\Local\Android\Sdk\platforms\android-36\android.jar` and Kotlin daemon temp files; reran Gradle outside the sandbox with Android Studio JBR and repo-local Gradle/Android homes.
 - Verified `:app:assembleDebug`, `:app:testDebugUnitTest`, and `:app:lintDebug` passed using Android Studio JBR.
+
+# 2026-05-08 - TASK-018 Trip Library and polished export
+
+- Upgraded History into Trip Library with title search, pinned sessions first, rename dialog, delete confirmation, and session export action.
+- Added `isPinned` to `ChatSessionEntity`, Room database version 6, migration `MIGRATION_5_6`, and exported schema `app/schemas/com.travelai.data.db.AppDatabase/6.json`.
+- Extended `ChatDao` and `ChatRepository` with rename/delete/pin session APIs and clean trip export loading through `StoredChatSession`.
+- Added `TripExport` formatter so sharing prioritizes parsed itinerary, then raw itinerary/fallback assistant text, and includes trip profile, budget total/items, and checklist without `Bạn:` / `TravelAI:` chat-role wrappers.
+- Updated Chat share to use the same clean export path instead of raw bubble concatenation.
+- Added `TripShare.kt` Android share helper and `TripExportTest` coverage for parsed itinerary export and raw fallback.
+- Updated `AGENTS.md` folder map/glossary to reflect Room version 6, Trip Library, trip export, and the Windows lint-cache lock gotcha.
+- Files edited: `TASKS.md`, `AGENTS.md`, `SESSION_NOTE.md`, `AppDatabase.kt`, `ChatDao.kt`, `ChatSession.kt`, `ChatRepository.kt`, `AppModule.kt`, `ChatScreen.kt`, `ChatViewModel.kt`, `HistoryScreen.kt`, `HistoryViewModel.kt`.
+- Files created: `TripExport.kt`, `TripShare.kt`, `TripExportTest.kt`, `app/schemas/com.travelai.data.db.AppDatabase/6.json`.
+- Verification passed with Android Studio JBR: `:app:assembleDebug`, `:app:testDebugUnitTest`, and `:app:lintDebug`.
+- Smoke note: `adb` from Android SDK showed no attached devices, so the planner -> chat -> itinerary -> budget/checklist -> library flow was verified by navigation/source path plus build/test/lint, not on a physical device.
+- Issue encountered: `:app:lintDebug` initially failed because another Gradle daemon held `app/build/intermediates/lint-cache`; stopping both global and repo-local Gradle daemons cleared the lock.

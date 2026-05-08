@@ -186,16 +186,16 @@
     - [x] Trạng thái checkbox lưu qua restart
     - [x] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
 
-- [ ] **TASK-018** — Trip Library and polished export
+- [x] **TASK-018** — Trip Library and polished export
   - **Why:** History cần trở thành nơi quản lý chuyến đi thật sự.
   - **What:** Nâng History thành Trip Library với search, rename, delete, pin/favorite, và share/export lịch trình sạch hơn.
   - **Touches:** `HistoryScreen.kt`, `HistoryViewModel.kt`, `ChatRepository.kt`, `ChatDao.kt`, `ChatScreen.kt`
   - **Acceptance:**
-    - [ ] Search chuyến đi theo title
-    - [ ] Rename/delete/pin session
-    - [ ] Share/export bỏ lớp chat thô và ưu tiên itinerary
-    - [ ] Smoke test luồng planner -> chat -> itinerary -> budget/checklist -> library pass
-    - [ ] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
+    - [x] Search chuyến đi theo title
+    - [x] Rename/delete/pin session
+    - [x] Share/export bỏ lớp chat thô và ưu tiên itinerary
+    - [x] Smoke test luồng planner -> chat -> itinerary -> budget/checklist -> library pass
+    - [x] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
 
 ---
 

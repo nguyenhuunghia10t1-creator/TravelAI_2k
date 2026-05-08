@@ -14,9 +14,11 @@ import com.travelai.data.db.entities.TripProfileEntity
 import com.travelai.data.model.BudgetCategory
 import com.travelai.data.model.BudgetItem
 import com.travelai.data.model.ChecklistItem
+import com.travelai.data.model.TripExport
 import com.travelai.data.model.TripPlanDay
 import com.travelai.data.model.TripPlanSnapshot
 import com.travelai.data.model.TripProfile
+import com.travelai.data.model.toShareText
 import com.travelai.data.model.toSessionTitle
 import com.travelai.data.parser.ItineraryParser
 import javax.inject.Inject
@@ -45,7 +47,8 @@ class ChatRepository @Inject constructor(
                 id = session.id,
                 title = session.title,
                 createdAt = session.createdAt,
-                updatedAt = session.updatedAt
+                updatedAt = session.updatedAt,
+                isPinned = session.isPinned
             )
         }
 
@@ -61,6 +64,7 @@ class ChatRepository @Inject constructor(
             title = session.title,
             createdAt = session.createdAt,
             updatedAt = session.updatedAt,
+            isPinned = session.isPinned,
             tripProfile = tripProfile?.toTripProfile(),
             tripPlanSnapshot = tripPlanSnapshot?.toTripPlanSnapshot(gson),
             budgetItems = budgetItems.map { it.toBudgetItem() },
@@ -222,6 +226,27 @@ class ChatRepository @Inject constructor(
         chatDao.updateSessionUpdatedAt(sessionId, System.currentTimeMillis())
     }
 
+    suspend fun renameSession(sessionId: Long, title: String) {
+        val cleanTitle = title.trim()
+        require(cleanTitle.isNotBlank()) { "Tên chuyến đi không được để trống." }
+        chatDao.renameSession(
+            sessionId = sessionId,
+            title = cleanTitle.take(SESSION_TITLE_MAX_LENGTH).trimEnd(),
+            updatedAt = System.currentTimeMillis()
+        )
+    }
+
+    suspend fun updateSessionPinned(sessionId: Long, isPinned: Boolean) {
+        chatDao.updateSessionPinned(sessionId = sessionId, isPinned = isPinned)
+    }
+
+    suspend fun deleteSession(sessionId: Long) {
+        chatDao.deleteSession(sessionId)
+    }
+
+    suspend fun createTripExportText(sessionId: Long): String? =
+        loadSession(sessionId)?.toTripExport()?.toShareText()
+
     suspend fun saveTripPlanSnapshot(
         sessionId: Long,
         rawResponse: String,
@@ -313,6 +338,7 @@ data class StoredChatSession(
     val title: String,
     val createdAt: Long,
     val updatedAt: Long,
+    val isPinned: Boolean,
     val tripProfile: TripProfile?,
     val tripPlanSnapshot: TripPlanSnapshot?,
     val budgetItems: List<BudgetItem>,
@@ -324,7 +350,8 @@ data class StoredChatSessionSummary(
     val id: Long,
     val title: String,
     val createdAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val isPinned: Boolean
 )
 
 data class StoredChatMessage(
@@ -387,3 +414,15 @@ private fun ChecklistItemEntity.toChecklistItem(): ChecklistItem = ChecklistItem
     createdAt = createdAt,
     updatedAt = updatedAt
 )
+
+private fun StoredChatSession.toTripExport(): TripExport =
+    TripExport(
+        title = title,
+        tripProfile = tripProfile,
+        tripPlanSnapshot = tripPlanSnapshot,
+        budgetItems = budgetItems,
+        checklistItems = checklistItems,
+        fallbackAssistantText = messages.asReversed()
+            .firstOrNull { it.role == "assistant" }
+            ?.content
+    )

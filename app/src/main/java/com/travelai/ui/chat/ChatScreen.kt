@@ -1,7 +1,5 @@
 package com.travelai.ui.chat
 
-import android.content.Context
-import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,7 +26,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -41,6 +38,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.travelai.ui.chat.components.ChatBubble
 import com.travelai.ui.chat.components.MessageInput
+import com.travelai.ui.share.shareTripText
 import com.travelai.ui.theme.TravelAITheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,6 +56,8 @@ fun ChatScreen(
         onInputChange = viewModel::onInputChange,
         onSend = viewModel::sendMessage,
         onRetry = viewModel::retryLastMessage,
+        onShare = viewModel::shareCurrentSession,
+        onShareConsumed = viewModel::consumeShareText,
         onOpenPlanner = onOpenPlanner,
         onOpenHistory = onOpenHistory,
         onOpenItinerary = onOpenItinerary
@@ -71,13 +71,21 @@ private fun ChatScreenContent(
     onInputChange: (String) -> Unit,
     onSend: () -> Unit,
     onRetry: () -> Unit,
+    onShare: () -> Unit,
+    onShareConsumed: () -> Unit,
     onOpenPlanner: () -> Unit,
     onOpenHistory: () -> Unit,
     onOpenItinerary: (Long) -> Unit
 ) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
-    val shareText = remember(uiState.messages) { uiState.messages.toShareText() }
+
+    LaunchedEffect(uiState.shareText) {
+        uiState.shareText?.let { exportText ->
+            shareTripText(context, exportText)
+            onShareConsumed()
+        }
+    }
 
     Scaffold(
         modifier = Modifier
@@ -88,8 +96,8 @@ private fun ChatScreenContent(
                 title = { Text("TravelAI") },
                 actions = {
                     TextButton(
-                        onClick = { shareChat(context, shareText) },
-                        enabled = shareText.isNotBlank()
+                        onClick = onShare,
+                        enabled = uiState.sessionId != null && !uiState.isSharing
                     ) {
                         Text("Chia sẻ")
                     }
@@ -206,30 +214,6 @@ private fun ChatMessages(
     }
 }
 
-private fun List<ChatMessage>.toShareText(): String =
-    joinToString(separator = "\n\n") { message ->
-        val speaker = when (message.role) {
-            ChatRole.USER -> "Bạn"
-            ChatRole.ASSISTANT -> "TravelAI"
-        }
-        "$speaker: ${message.content}"
-    }
-
-private fun shareChat(
-    context: Context,
-    shareText: String
-) {
-    if (shareText.isBlank()) return
-
-    val sendIntent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, shareText)
-    }
-    context.startActivity(
-        Intent.createChooser(sendIntent, "Chia sẻ lịch trình")
-    )
-}
-
 @Composable
 private fun OfflineBanner(
     message: String,
@@ -341,6 +325,8 @@ private fun ChatScreenPreview() {
             onInputChange = {},
             onSend = {},
             onRetry = {},
+            onShare = {},
+            onShareConsumed = {},
             onOpenPlanner = {},
             onOpenHistory = {},
             onOpenItinerary = {}
@@ -357,6 +343,8 @@ private fun EmptyChatScreenPreview() {
             onInputChange = {},
             onSend = {},
             onRetry = {},
+            onShare = {},
+            onShareConsumed = {},
             onOpenPlanner = {},
             onOpenHistory = {},
             onOpenItinerary = {}
@@ -381,6 +369,8 @@ private fun LoadingChatScreenPreview() {
             onInputChange = {},
             onSend = {},
             onRetry = {},
+            onShare = {},
+            onShareConsumed = {},
             onOpenPlanner = {},
             onOpenHistory = {},
             onOpenItinerary = {}
@@ -406,6 +396,8 @@ private fun RetryErrorChatScreenPreview() {
             onInputChange = {},
             onSend = {},
             onRetry = {},
+            onShare = {},
+            onShareConsumed = {},
             onOpenPlanner = {},
             onOpenHistory = {},
             onOpenItinerary = {}
@@ -425,6 +417,8 @@ private fun OfflineChatScreenPreview() {
             onInputChange = {},
             onSend = {},
             onRetry = {},
+            onShare = {},
+            onShareConsumed = {},
             onOpenPlanner = {},
             onOpenHistory = {},
             onOpenItinerary = {}
