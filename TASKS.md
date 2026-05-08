@@ -197,6 +197,20 @@
     - [x] Smoke test luồng planner -> chat -> itinerary -> budget/checklist -> library pass
     - [x] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
 
+- [x] **TASK-019** — Post-V2 polish và DX hardening
+  - **Why:** Sau review toàn dự án (Claude + codex), còn 4 nhóm điểm yếu nhỏ cần fix trước khi dùng cá nhân. Mục tiêu: polish, KHÔNG publish Play Store.
+  - **What:** Hardening OkHttp/timeouts, bound input planner, dọn test package cũ, bọc multi-write repo trong `@Transaction`, cập nhật README V2, thêm dep `material-icons-core` và polish UX (IconButton + contentDescription, overflow menu, multi-line input).
+  - **Touches:** `ApiClient.kt`, `TripPlannerViewModel.kt`, `ChatDao.kt`, `ChatRepository.kt`, `ExampleInstrumentedTest.kt` (move package), `README.md`, `gradle/libs.versions.toml`, `app/build.gradle.kts`, `ChatScreen.kt`, `HistoryScreen.kt`, `MessageInput.kt`
+  - **Acceptance:**
+    - [x] OkHttp có connect/write/call/read timeout đầy đủ
+    - [x] Planner chặn `days > 30` và `people > 50`
+    - [x] Test sample không còn nằm ở package `com.midterm.myapplication6`
+    - [x] Multi-write repo (saveMessage, budget/checklist add/update/delete, createTripSession) đi qua `@Transaction` wrapper trên DAO
+    - [x] README có section V2 features và smoke test V2 flow
+    - [x] Dep `material-icons-core` được khai báo, ChatScreen TopAppBar và HistoryScreen dùng IconButton + contentDescription, HistorySessionRow gom action vào overflow menu
+    - [x] MessageInput cho phép nhập multi-line (maxLines=5)
+    - [x] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
+
 ---
 
 ## Backlog (chưa schedule)

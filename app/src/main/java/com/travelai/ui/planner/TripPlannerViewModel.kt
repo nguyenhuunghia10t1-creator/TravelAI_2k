@@ -100,6 +100,9 @@ data class TripPlannerUiState(
     val createdSessionId: Long? = null
 )
 
+private const val MAX_DAYS = 30
+private const val MAX_PEOPLE = 50
+
 private fun TripPlannerUiState.validationError(): String? {
     val daysValue = days.toIntOrNull()
     val peopleValue = people.toIntOrNull()
@@ -107,7 +110,9 @@ private fun TripPlannerUiState.validationError(): String? {
     return when {
         destination.isBlank() -> "Nhập điểm đến trước khi tạo lịch trình."
         daysValue == null || daysValue <= 0 -> "Số ngày phải lớn hơn 0."
+        daysValue > MAX_DAYS -> "Số ngày không vượt quá $MAX_DAYS."
         peopleValue == null || peopleValue <= 0 -> "Số người phải lớn hơn 0."
+        peopleValue > MAX_PEOPLE -> "Số người không vượt quá $MAX_PEOPLE."
         else -> null
     }
 }

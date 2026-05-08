@@ -121,14 +121,32 @@ Phần này chạy trên điện thoại thật sau khi cài APK.
    - Long-press vào message AI, paste sang app khác để xác nhận copy đúng nội dung.
    - Bấm `Chia sẻ`, xác nhận Android share sheet mở với toàn bộ nội dung chat hiện tại.
 
+6. Trip Planner V2 flow
+   - Bấm `Tạo chuyến` từ ChatScreen, nhập điểm đến, số ngày, ngân sách, số người, phong cách, phương tiện, ghi chú; bấm tạo.
+   - Xác nhận AI trả lịch trình theo trip profile vừa nhập, session title ưu tiên điểm đến/số ngày.
+   - Mở `Lịch trình`, kiểm tra parser tách Ngày/Sáng/Chiều/Tối; nếu parser không nhận diện được thì fallback raw text.
+   - Trong ItineraryScreen, thêm/sửa/xóa budget item và checklist item; force close app rồi mở lại để xác nhận lưu qua restart, tổng ngân sách cập nhật đúng.
+   - Vào Trip Library (`Lịch sử`), thử search theo title, rename, ghim/bỏ ghim, xóa, và Chia sẻ — nội dung share ưu tiên itinerary đã parse, không phải chat thô.
+
 ## Troubleshooting
 
 - `JAVA_HOME is not set`: mở bằng Android Studio hoặc set `JAVA_HOME` tới JBR của Android Studio.
 - Gradle/Kotlin daemon lỗi quyền trên Windows: chạy lại với Android Studio JBR và `GRADLE_USER_HOME` trong repo nếu cần.
 - `sdk.dir` sai: mở Android Studio SDK Manager, kiểm tra path SDK rồi cập nhật `local.properties`.
 - API trả 401/403: kiểm tra `DEEPSEEK_API_KEY` trong `local.properties`.
-- API timeout: app có timeout UX 15 giây và OkHttp read timeout 30 giây; thử lại khi mạng ổn định.
+- API timeout: app có timeout UX 15 giây và OkHttp connect/write 15s, read 30s, call 45s; thử lại khi mạng ổn định.
 
 ## Scope hiện tại
 
-MVP hiện có chat AI, multi-turn context, Room persistence, History screen, empty/loading/error states, retry, copy/share, debug/release build. Chưa có backend, account, Maps/GPS, streaming response hoặc booking integration.
+### V1 — MVP chat
+Chat AI với DeepSeek, multi-turn context, Room persistence, History screen, empty/loading/error states, retry, copy/share, debug/release build.
+
+### V2 — Trip planning
+- **Trip Planner form:** nhập điểm đến, số ngày, ngân sách, số người, phong cách, phương tiện, ghi chú để tạo session có cấu trúc.
+- **Itinerary parser + UI:** tự parse response của AI thành lịch trình theo Ngày / Sáng / Chiều / Tối; có raw fallback khi parser không bắt được.
+- **Budget planner:** CRUD budget item theo session (ăn uống, di chuyển, vé tham quan, khách sạn, phát sinh) + tổng dự kiến.
+- **Travel checklist:** CRUD checklist item, lưu trạng thái checkbox qua restart.
+- **Trip Library:** thay thế History — search theo title, rename, delete (CASCADE), pin/favorite, share/export ưu tiên itinerary đã parse.
+
+### Chưa có
+Backend / API key proxy, account, Google Maps/GPS, streaming response, booking integration, dark mode, localization (strings hiện hardcode tiếng Việt).

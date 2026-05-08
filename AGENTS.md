@@ -208,8 +208,11 @@ app/src/main/java/com/travelai/
   này sẽ compile error khó hiểu.
 - ⚠️ **Room + Coroutines:** DAO suspend fun tự động chạy trên IO dispatcher.
   KHÔNG wrap thêm `withContext(Dispatchers.IO)` — sẽ deadlock.
-- ⚠️ **OkHttp timeout:** DeepSeek có thể chậm > 10s cho response dài. Set
-  `readTimeout(30, TimeUnit.SECONDS)` trong OkHttpClient.
+- ⚠️ **OkHttp timeout:** DeepSeek có thể chậm > 10s cho response dài. `ApiClient`
+  hiện set `connectTimeout(15s)`, `writeTimeout(15s)`, `callTimeout(45s)`,
+  `readTimeout(30s)`. Chỉ set `readTimeout` không đủ — DNS/handshake treo sẽ
+  kéo dài đến lớp `withTimeout` của ViewModel mới bị hủy. Khi đổi base URL hoặc
+  thêm interceptor, giữ đủ 4 timeout này.
 - ⚠️ **Compose recomposition:** tránh tạo object mới trong Composable body
   (vd: `listOf()` inline) — sẽ trigger recompose liên tục. Dùng `remember {}`.
 - ⚠️ **local.properties:** file này KHÔNG được commit. Người clone repo mới
@@ -217,6 +220,20 @@ app/src/main/java/com/travelai/
 - ⚠️ **Windows Gradle/lint cache lock:** nếu `:app:lintDebug` hoặc `clean` báo
   file trong `app/build/intermediates/lint-cache` đang bị process khác giữ, chạy
   `gradlew --stop` cho cả Gradle home đang dùng rồi retry; không xóa source.
+- ⚠️ **Compose Material icons KHÔNG đi kèm Material3:** Compose BOM chỉ pin
+  version chứ không tự thêm artifact. Muốn dùng `Icons.Filled.*` /
+  `Icons.AutoMirrored.Filled.*` phải khai báo
+  `androidx.compose.material:material-icons-core` trong `libs.versions.toml`
+  và `app/build.gradle.kts`. Tránh `material-icons-extended` (~20MB,
+  thừa cho MVP) — các icon mở rộng như `CalendarMonth`, `History`, `Folder`,
+  `Description`, `Bookmark` thuộc bộ extended, không có trong core.
+- ⚠️ **Room `@Transaction` với function body cần class/abstract class:** Room
+  có thể annotate `@Transaction` lên `@Query`/`@Insert` (interface OK) nhưng
+  nếu cần body chạy nhiều DAO call atomic phải để DAO là `abstract class` với
+  hàm `open suspend fun`. `ChatDao` đã đổi sang abstract class — khi thêm DAO
+  mới có multi-write nên dùng cùng pattern thay vì gọi 2 `chatDao.xxx()` rời
+  rạc trong repo (sẽ làm `chat_sessions.updatedAt` lệch dữ liệu con khi app bị
+  kill giữa chừng).
 
 ---
 

@@ -223,3 +223,21 @@
 - Verification passed with Android Studio JBR: `:app:assembleDebug`, `:app:testDebugUnitTest`, and `:app:lintDebug`.
 - Smoke note: `adb` from Android SDK showed no attached devices, so the planner -> chat -> itinerary -> budget/checklist -> library flow was verified by navigation/source path plus build/test/lint, not on a physical device.
 - Issue encountered: `:app:lintDebug` initially failed because another Gradle daemon held `app/build/intermediates/lint-cache`; stopping both global and repo-local Gradle daemons cleared the lock.
+
+# 2026-05-08 - TASK-019 Post-V2 polish và DX hardening
+
+- Reviewed dự án hậu V2 (Claude + codex) và chốt 4 nhóm fix: quick wins, data integrity, developer DX, UX polish. Không bao gồm backend proxy API key, R8/proguard, hay nâng `targetSdk` (đẩy sang V3 backlog).
+- OkHttp giờ có `connectTimeout(15s)`, `writeTimeout(15s)`, `callTimeout(45s)`, giữ `readTimeout(30s)` để cứng hóa khi DNS/handshake treo.
+- TripPlanner `validationError()` thêm `MAX_DAYS = 30` và `MAX_PEOPLE = 50` để chặn input bất hợp lý gửi prompt khổng lồ tới DeepSeek.
+- Xóa test sample lệch ở `com.midterm.myapplication6` (cả unit test 2+2 và instrumented test) và tạo lại `app/src/androidTest/java/com/travelai/ExampleInstrumentedTest.kt` để khớp `applicationId`.
+- Đổi `ChatDao` từ `interface` → `abstract class` và thêm 8 hàm `@Transaction` wrapper bundle insert/update/delete với `updateSessionUpdatedAt`. `ChatRepository` gọi các hàm này thay vì 2 DAO call rời rạc, đảm bảo `chat_sessions.updatedAt` không bao giờ lệch dữ liệu con khi app bị kill giữa chừng.
+- README cập nhật scope: tách V1 (MVP chat) và V2 (planner, itinerary parser, budget, checklist, Trip Library), thêm flow smoke test V2, sửa note OkHttp timeout cho khớp config mới.
+- Thêm dependency `androidx.compose.material:material-icons-core` (Compose BOM pin version) vào `gradle/libs.versions.toml` + `app/build.gradle.kts`. Compose BOM chỉ manage version, KHÔNG kéo theo artifact icons — phải khai báo riêng nếu muốn dùng `Icons.Filled.*`.
+- ChatScreen TopAppBar đổi 4 TextButton ("Chia sẻ" / "Tạo chuyến" / "Lịch trình" / "Lịch sử") thành 4 IconButton (`Share`, `Add`, `AutoMirrored.List`, `Menu`) kèm `contentDescription` cho TalkBack.
+- HistoryScreen back button đổi sang `Icons.AutoMirrored.Filled.ArrowBack` IconButton; HistorySessionRow gom 4 action phụ ("Chia sẻ", "Ghim/Bỏ ghim", "Đổi tên", "Xóa") vào overflow `DropdownMenu` mở từ icon `MoreVert`.
+- MessageInput bỏ `singleLine = true`, dùng `maxLines = 5` (auto-grow rồi scroll); bỏ `ImeAction.Send` + keyboard action gửi vì multi-line cần Enter để xuống dòng. User vẫn dùng nút "Gửi" bên cạnh.
+- Files edited: `TASKS.md`, `AGENTS.md`, `SESSION_NOTE.md`, `README.md`, `ApiClient.kt`, `TripPlannerViewModel.kt`, `ChatDao.kt`, `ChatRepository.kt`, `ChatScreen.kt`, `HistoryScreen.kt`, `MessageInput.kt`, `gradle/libs.versions.toml`, `app/build.gradle.kts`.
+- Files removed: `app/src/test/java/com/midterm/myapplication6/ExampleUnitTest.kt`, `app/src/androidTest/java/com/midterm/myapplication6/ExampleInstrumentedTest.kt`.
+- Files created: `app/src/androidTest/java/com/travelai/ExampleInstrumentedTest.kt`.
+- Verified `:app:assembleDebug`, `:app:testDebugUnitTest`, và `:app:lintDebug` pass với Android Studio JBR; có pre-existing warning `LocalClipboardManager` deprecated trong `ChatScreen.kt`, không liên quan đợt polish này.
+- Manual smoke test trên thiết bị thật chưa chạy vì `adb devices` không có thiết bị nối; checklist trong plan để user chạy thủ công khi có máy.

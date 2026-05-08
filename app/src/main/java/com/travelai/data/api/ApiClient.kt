@@ -10,6 +10,9 @@ object ApiClient {
 
     fun create(apiKey: String): DeepSeekApi {
         val client = OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .writeTimeout(15, TimeUnit.SECONDS)
+            .callTimeout(45, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .addInterceptor { chain ->
                 val requestBuilder = chain.request()

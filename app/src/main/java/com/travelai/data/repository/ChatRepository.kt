@@ -81,15 +81,14 @@ class ChatRepository @Inject constructor(
 
     suspend fun createTripSession(profile: TripProfile): Long {
         val now = System.currentTimeMillis()
-        val sessionId = chatDao.insertSession(
-            ChatSessionEntity(
+        return chatDao.insertSessionAndProfile(
+            session = ChatSessionEntity(
                 title = profile.toSessionTitle(),
                 createdAt = now,
                 updatedAt = now
-            )
+            ),
+            profile = profile.toEntity(sessionId = 0L, createdAt = now)
         )
-        chatDao.insertTripProfile(profile.toEntity(sessionId = sessionId, createdAt = now))
-        return sessionId
     }
 
     suspend fun createSession(firstMessage: String): Long {
@@ -105,15 +104,15 @@ class ChatRepository @Inject constructor(
 
     suspend fun saveMessage(sessionId: Long, role: String, content: String) {
         val now = System.currentTimeMillis()
-        chatDao.insertMessage(
-            ChatMessageEntity(
+        chatDao.insertMessageAndTouchSession(
+            message = ChatMessageEntity(
                 sessionId = sessionId,
                 role = role,
                 content = content,
                 createdAt = now
-            )
+            ),
+            updatedAt = now
         )
-        chatDao.updateSessionUpdatedAt(sessionId, now)
     }
 
     suspend fun getBudgetItems(sessionId: Long): List<BudgetItem> =
@@ -130,8 +129,8 @@ class ChatRepository @Inject constructor(
         note: String
     ): BudgetItem {
         val now = System.currentTimeMillis()
-        val itemId = chatDao.insertBudgetItem(
-            BudgetItemEntity(
+        val itemId = chatDao.insertBudgetItemAndTouchSession(
+            item = BudgetItemEntity(
                 sessionId = sessionId,
                 category = category.name,
                 title = title.trim(),
@@ -139,9 +138,9 @@ class ChatRepository @Inject constructor(
                 note = note.trim(),
                 createdAt = now,
                 updatedAt = now
-            )
+            ),
+            updatedAt = now
         )
-        chatDao.updateSessionUpdatedAt(sessionId, now)
         return BudgetItem(
             id = itemId,
             sessionId = sessionId,
@@ -163,7 +162,7 @@ class ChatRepository @Inject constructor(
         note: String
     ) {
         val now = System.currentTimeMillis()
-        chatDao.updateBudgetItem(
+        chatDao.updateBudgetItemAndTouchSession(
             sessionId = sessionId,
             itemId = itemId,
             category = category.name,
@@ -172,12 +171,14 @@ class ChatRepository @Inject constructor(
             note = note.trim(),
             updatedAt = now
         )
-        chatDao.updateSessionUpdatedAt(sessionId, now)
     }
 
     suspend fun deleteBudgetItem(sessionId: Long, itemId: Long) {
-        chatDao.deleteBudgetItem(sessionId = sessionId, itemId = itemId)
-        chatDao.updateSessionUpdatedAt(sessionId, System.currentTimeMillis())
+        chatDao.deleteBudgetItemAndTouchSession(
+            sessionId = sessionId,
+            itemId = itemId,
+            updatedAt = System.currentTimeMillis()
+        )
     }
 
     suspend fun addChecklistItem(
@@ -186,16 +187,16 @@ class ChatRepository @Inject constructor(
     ): ChecklistItem {
         val now = System.currentTimeMillis()
         val cleanTitle = title.trim()
-        val itemId = chatDao.insertChecklistItem(
-            ChecklistItemEntity(
+        val itemId = chatDao.insertChecklistItemAndTouchSession(
+            item = ChecklistItemEntity(
                 sessionId = sessionId,
                 title = cleanTitle,
                 isChecked = false,
                 createdAt = now,
                 updatedAt = now
-            )
+            ),
+            updatedAt = now
         )
-        chatDao.updateSessionUpdatedAt(sessionId, now)
         return ChecklistItem(
             id = itemId,
             sessionId = sessionId,
@@ -212,18 +213,20 @@ class ChatRepository @Inject constructor(
         isChecked: Boolean
     ) {
         val now = System.currentTimeMillis()
-        chatDao.updateChecklistItemChecked(
+        chatDao.updateChecklistItemCheckedAndTouchSession(
             sessionId = sessionId,
             itemId = itemId,
             isChecked = isChecked,
             updatedAt = now
         )
-        chatDao.updateSessionUpdatedAt(sessionId, now)
     }
 
     suspend fun deleteChecklistItem(sessionId: Long, itemId: Long) {
-        chatDao.deleteChecklistItem(sessionId = sessionId, itemId = itemId)
-        chatDao.updateSessionUpdatedAt(sessionId, System.currentTimeMillis())
+        chatDao.deleteChecklistItemAndTouchSession(
+            sessionId = sessionId,
+            itemId = itemId,
+            updatedAt = System.currentTimeMillis()
+        )
     }
 
     suspend fun renameSession(sessionId: Long, title: String) {

@@ -15,10 +15,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -29,6 +36,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -100,8 +110,11 @@ private fun HistoryScreenContent(
             TopAppBar(
                 title = { Text("Trip Library") },
                 navigationIcon = {
-                    TextButton(onClick = onBack) {
-                        Text("Quay lại")
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Quay lại"
+                        )
                     }
                 }
             )
@@ -391,7 +404,8 @@ private fun HistorySessionRow(
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = onClick) {
                     Text("Chat")
@@ -399,39 +413,77 @@ private fun HistorySessionRow(
                 TextButton(onClick = onOpenItinerary) {
                     Text("Lịch trình")
                 }
-                TextButton(
-                    onClick = onShareSession,
-                    enabled = !isSharing
-                ) {
-                    Text(if (isSharing) "Đang xuất" else "Xuất")
-                }
+                SessionOverflowMenu(
+                    isPinned = session.isPinned,
+                    isSaving = isSaving,
+                    isSharing = isSharing,
+                    onShareSession = onShareSession,
+                    onTogglePinned = onTogglePinned,
+                    onStartRename = onStartRename,
+                    onRequestDelete = onRequestDelete
+                )
             }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                TextButton(
-                    onClick = onTogglePinned,
-                    enabled = !isSaving
-                ) {
-                    Text(if (session.isPinned) "Bỏ ghim" else "Ghim")
+        }
+    }
+}
+
+@Composable
+private fun SessionOverflowMenu(
+    isPinned: Boolean,
+    isSaving: Boolean,
+    isSharing: Boolean,
+    onShareSession: () -> Unit,
+    onTogglePinned: () -> Unit,
+    onStartRename: () -> Unit,
+    onRequestDelete: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(Icons.Filled.MoreVert, contentDescription = "Thao tác khác")
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text(if (isSharing) "Đang xuất..." else "Chia sẻ") },
+                enabled = !isSharing,
+                onClick = {
+                    expanded = false
+                    onShareSession()
                 }
-                TextButton(
-                    onClick = onStartRename,
-                    enabled = !isSaving
-                ) {
-                    Text("Đổi tên")
+            )
+            DropdownMenuItem(
+                text = { Text(if (isPinned) "Bỏ ghim" else "Ghim") },
+                enabled = !isSaving,
+                onClick = {
+                    expanded = false
+                    onTogglePinned()
                 }
-                TextButton(
-                    onClick = onRequestDelete,
-                    enabled = !isSaving
-                ) {
+            )
+            DropdownMenuItem(
+                text = { Text("Đổi tên") },
+                enabled = !isSaving,
+                onClick = {
+                    expanded = false
+                    onStartRename()
+                }
+            )
+            DropdownMenuItem(
+                text = {
                     Text(
                         text = "Xóa",
                         color = MaterialTheme.colorScheme.error
                     )
+                },
+                enabled = !isSaving,
+                onClick = {
+                    expanded = false
+                    onRequestDelete()
                 }
-            }
+            )
         }
     }
 }
