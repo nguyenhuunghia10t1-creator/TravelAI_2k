@@ -48,6 +48,7 @@ import com.travelai.ui.theme.TravelAITheme
 fun ChatScreen(
     onOpenPlanner: () -> Unit,
     onOpenHistory: () -> Unit,
+    onOpenItinerary: (Long) -> Unit,
     viewModel: ChatViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -58,7 +59,8 @@ fun ChatScreen(
         onSend = viewModel::sendMessage,
         onRetry = viewModel::retryLastMessage,
         onOpenPlanner = onOpenPlanner,
-        onOpenHistory = onOpenHistory
+        onOpenHistory = onOpenHistory,
+        onOpenItinerary = onOpenItinerary
     )
 }
 
@@ -70,7 +72,8 @@ private fun ChatScreenContent(
     onSend: () -> Unit,
     onRetry: () -> Unit,
     onOpenPlanner: () -> Unit,
-    onOpenHistory: () -> Unit
+    onOpenHistory: () -> Unit,
+    onOpenItinerary: (Long) -> Unit
 ) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
@@ -92,6 +95,12 @@ private fun ChatScreenContent(
                     }
                     TextButton(onClick = onOpenPlanner) {
                         Text("Tạo chuyến")
+                    }
+                    TextButton(
+                        onClick = { uiState.sessionId?.let(onOpenItinerary) },
+                        enabled = uiState.sessionId != null
+                    ) {
+                        Text("Lịch trình")
                     }
                     TextButton(onClick = onOpenHistory) {
                         Text("Lịch sử")
@@ -333,7 +342,8 @@ private fun ChatScreenPreview() {
             onSend = {},
             onRetry = {},
             onOpenPlanner = {},
-            onOpenHistory = {}
+            onOpenHistory = {},
+            onOpenItinerary = {}
         )
     }
 }
@@ -348,7 +358,8 @@ private fun EmptyChatScreenPreview() {
             onSend = {},
             onRetry = {},
             onOpenPlanner = {},
-            onOpenHistory = {}
+            onOpenHistory = {},
+            onOpenItinerary = {}
         )
     }
 }
@@ -371,7 +382,8 @@ private fun LoadingChatScreenPreview() {
             onSend = {},
             onRetry = {},
             onOpenPlanner = {},
-            onOpenHistory = {}
+            onOpenHistory = {},
+            onOpenItinerary = {}
         )
     }
 }
@@ -395,7 +407,8 @@ private fun RetryErrorChatScreenPreview() {
             onSend = {},
             onRetry = {},
             onOpenPlanner = {},
-            onOpenHistory = {}
+            onOpenHistory = {},
+            onOpenItinerary = {}
         )
     }
 }
@@ -413,7 +426,8 @@ private fun OfflineChatScreenPreview() {
             onSend = {},
             onRetry = {},
             onOpenPlanner = {},
-            onOpenHistory = {}
+            onOpenHistory = {},
+            onOpenItinerary = {}
         )
     }
 }

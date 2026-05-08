@@ -92,8 +92,11 @@ app/src/main/java/com/travelai/
 │   ├── history/
 │   │   ├── HistoryScreen.kt
 │   │   └── HistoryViewModel.kt
+│   ├── itinerary/
+│   │   ├── ItineraryScreen.kt     # UI lịch trình theo tab ngày + raw fallback
+│   │   └── ItineraryViewModel.kt  # Load snapshot/raw itinerary theo session
 │   ├── navigation/
-│   │   └── NavGraph.kt            # NavHost, routes: "planner", "chat", "history"
+│   │   └── NavGraph.kt            # NavHost, routes: "planner", "chat", "history", "itinerary/{sessionId}"
 │   └── theme/
 │       └── Theme.kt               # MaterialTheme, colors, typography
 ├── di/

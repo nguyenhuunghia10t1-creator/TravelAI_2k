@@ -11,6 +11,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.travelai.ui.chat.ChatScreen
 import com.travelai.ui.history.HistoryScreen
+import com.travelai.ui.itinerary.ItineraryScreen
 import com.travelai.ui.planner.TripPlannerScreen
 
 @Composable
@@ -57,6 +58,11 @@ fun NavGraph(
                     navController.navigate(TravelAiRoutes.HISTORY_ROUTE) {
                         launchSingleTop = true
                     }
+                },
+                onOpenItinerary = { sessionId ->
+                    navController.navigate(TravelAiRoutes.itineraryRoute(sessionId)) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -88,6 +94,11 @@ fun NavGraph(
                     navController.navigate(TravelAiRoutes.HISTORY_ROUTE) {
                         launchSingleTop = true
                     }
+                },
+                onOpenItinerary = { sessionId ->
+                    navController.navigate(TravelAiRoutes.itineraryRoute(sessionId)) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -101,6 +112,31 @@ fun NavGraph(
                 },
                 onSessionClick = { sessionId ->
                     navController.navigate(TravelAiRoutes.chatRoute(sessionId))
+                },
+                onOpenItinerary = { sessionId ->
+                    navController.navigate(TravelAiRoutes.itineraryRoute(sessionId))
+                }
+            )
+        }
+
+        composable(
+            route = TravelAiRoutes.ITINERARY_ROUTE_WITH_ARGS,
+            arguments = listOf(
+                navArgument(TravelAiRoutes.SESSION_ID_ARG) {
+                    type = NavType.LongType
+                }
+            )
+        ) {
+            ItineraryScreen(
+                onBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(TravelAiRoutes.HISTORY_ROUTE)
+                    }
+                },
+                onOpenChat = { sessionId ->
+                    navController.navigate(TravelAiRoutes.chatRoute(sessionId)) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -111,11 +147,13 @@ private object TravelAiRoutes {
     const val PLANNER_ROUTE = "planner"
     const val CHAT_ROUTE = "chat"
     const val HISTORY_ROUTE = "history"
+    const val ITINERARY_ROUTE = "itinerary"
     const val SESSION_ID_ARG = "sessionId"
     const val DRAFT_PROMPT_ARG = "draftPrompt"
     const val AUTO_START_ARG = "autoStart"
     const val CHAT_ROUTE_WITH_ARGS =
         "$CHAT_ROUTE?$SESSION_ID_ARG={$SESSION_ID_ARG}&$DRAFT_PROMPT_ARG={$DRAFT_PROMPT_ARG}&$AUTO_START_ARG={$AUTO_START_ARG}"
+    const val ITINERARY_ROUTE_WITH_ARGS = "$ITINERARY_ROUTE/{$SESSION_ID_ARG}"
 
     fun chatRoute(
         sessionId: Long? = null,
@@ -137,4 +175,6 @@ private object TravelAiRoutes {
             "$CHAT_ROUTE?${arguments.joinToString("&")}"
         }
     }
+
+    fun itineraryRoute(sessionId: Long): String = "$ITINERARY_ROUTE/$sessionId"
 }

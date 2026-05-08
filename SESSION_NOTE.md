@@ -171,3 +171,14 @@
 - Files edited: `TASKS.md`, `AGENTS.md`, `AppDatabase.kt`, `ChatDao.kt`, `ChatRepository.kt`, `AppModule.kt`, `ChatViewModel.kt`.
 - Files created: `TripPlanSnapshot.kt`, `ItineraryParser.kt`, `TripPlanSnapshotEntity.kt`, `ItineraryParserTest.kt`, `app/schemas/com.travelai.data.db.AppDatabase/3.json`.
 - Verified `:app:assembleDebug`, `:app:testDebugUnitTest`, and `:app:lintDebug` passed using Android Studio JBR.
+
+# 2026-05-08 - TASK-015 Itinerary UI
+
+- Added `itinerary/{sessionId}` route with `ItineraryScreen` and `ItineraryViewModel`.
+- Itinerary UI loads the current session snapshot and shows parsed tabs by day with `Sáng`, `Chiều`, and `Tối` cards.
+- Added raw-response fallback so sessions without parsed itinerary still show the original assistant itinerary text or latest assistant message.
+- Added navigation into itinerary from Chat and History; itinerary can also return to the related chat session.
+- Updated `ChatUiState` to expose the current `sessionId` after session load/create so Chat can open the correct itinerary.
+- Files edited: `TASKS.md`, `AGENTS.md`, `SESSION_NOTE.md`, `ChatScreen.kt`, `ChatViewModel.kt`, `HistoryScreen.kt`, `NavGraph.kt`.
+- Files created: `ItineraryScreen.kt`, `ItineraryViewModel.kt`.
+- Verified `:app:assembleDebug`, `:app:testDebugUnitTest`, and `:app:lintDebug` passed using Android Studio JBR.

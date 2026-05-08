@@ -156,15 +156,15 @@
     - [x] Nếu parser không nhận diện được thì fallback raw text
     - [x] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
 
-- [ ] **TASK-015** — Itinerary UI
+- [x] **TASK-015** — Itinerary UI
   - **Why:** UI cần làm lịch trình dễ đọc và khác chatbot thường.
   - **What:** Thêm route `itinerary/{sessionId}` và UI card/tab theo ngày, kèm fallback chat text.
   - **Touches:** `ItineraryScreen.kt`, `ItineraryViewModel.kt`, `NavGraph.kt`, `HistoryScreen.kt`, `ChatScreen.kt`
   - **Acceptance:**
-    - [ ] Từ chat/history mở được itinerary của session
-    - [ ] Hiển thị Ngày/Sáng/Chiều/Tối rõ ràng
-    - [ ] Session chưa có parsed itinerary vẫn hiển thị raw response
-    - [ ] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
+    - [x] Từ chat/history mở được itinerary của session
+    - [x] Hiển thị Ngày/Sáng/Chiều/Tối rõ ràng
+    - [x] Session chưa có parsed itinerary vẫn hiển thị raw response
+    - [x] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
 
 - [ ] **TASK-016** — Budget planner
   - **Why:** Ngân sách là yếu tố đặc trưng của trợ lý du lịch tự túc.

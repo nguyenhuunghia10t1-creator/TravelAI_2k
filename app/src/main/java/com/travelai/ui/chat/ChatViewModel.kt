@@ -139,14 +139,15 @@ class ChatViewModel @Inject constructor(
                 )
 
                 _uiState.update {
-                    it.copy(
-                        messages = it.messages + ChatMessage(
-                            role = ChatRole.ASSISTANT,
-                            content = response
-                        ),
-                        tripPlanSnapshot = tripPlanSnapshot ?: it.tripPlanSnapshot,
-                        isLoading = false,
-                        errorMessage = null,
+                        it.copy(
+                            messages = it.messages + ChatMessage(
+                                role = ChatRole.ASSISTANT,
+                                content = response
+                            ),
+                            sessionId = sessionId,
+                            tripPlanSnapshot = tripPlanSnapshot ?: it.tripPlanSnapshot,
+                            isLoading = false,
+                            errorMessage = null,
                         canRetry = false,
                         offlineBannerMessage = null
                     )
@@ -199,14 +200,15 @@ class ChatViewModel @Inject constructor(
                 )
 
                 _uiState.update {
-                    it.copy(
-                        messages = it.messages + ChatMessage(
-                            role = ChatRole.ASSISTANT,
-                            content = response
-                        ),
-                        tripPlanSnapshot = tripPlanSnapshot ?: it.tripPlanSnapshot,
-                        isLoading = false,
-                        errorMessage = null,
+                        it.copy(
+                            messages = it.messages + ChatMessage(
+                                role = ChatRole.ASSISTANT,
+                                content = response
+                            ),
+                            sessionId = retry.sessionId,
+                            tripPlanSnapshot = tripPlanSnapshot ?: it.tripPlanSnapshot,
+                            isLoading = false,
+                            errorMessage = null,
                         canRetry = false,
                         offlineBannerMessage = null
                     )
@@ -241,6 +243,7 @@ class ChatViewModel @Inject constructor(
                     currentTripProfile = session.tripProfile
                     _uiState.update {
                         it.copy(
+                            sessionId = session.id,
                             messages = loadedMessages,
                             tripPlanSnapshot = session.tripPlanSnapshot,
                             errorMessage = null,
@@ -315,6 +318,7 @@ class ChatViewModel @Inject constructor(
         currentSessionId?.let { return it }
         return chatRepository.createSession(firstMessage).also { sessionId ->
             currentSessionId = sessionId
+            _uiState.update { it.copy(sessionId = sessionId) }
         }
     }
 
@@ -421,6 +425,7 @@ class ChatViewModel @Inject constructor(
 }
 
 data class ChatUiState(
+    val sessionId: Long? = null,
     val messages: List<ChatMessage> = emptyList(),
     val tripPlanSnapshot: TripPlanSnapshot? = null,
     val inputText: String = "",

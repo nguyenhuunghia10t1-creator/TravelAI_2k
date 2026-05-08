@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,6 +39,7 @@ import com.travelai.ui.theme.TravelAITheme
 fun HistoryScreen(
     onBack: () -> Unit,
     onSessionClick: (Long) -> Unit,
+    onOpenItinerary: (Long) -> Unit,
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -45,7 +47,8 @@ fun HistoryScreen(
     HistoryScreenContent(
         uiState = uiState,
         onBack = onBack,
-        onSessionClick = onSessionClick
+        onSessionClick = onSessionClick,
+        onOpenItinerary = onOpenItinerary
     )
 }
 
@@ -54,7 +57,8 @@ fun HistoryScreen(
 private fun HistoryScreenContent(
     uiState: HistoryUiState,
     onBack: () -> Unit,
-    onSessionClick: (Long) -> Unit
+    onSessionClick: (Long) -> Unit,
+    onOpenItinerary: (Long) -> Unit
 ) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -105,7 +109,8 @@ private fun HistoryScreenContent(
                 ) { session ->
                     HistorySessionRow(
                         session = session,
-                        onClick = { onSessionClick(session.id) }
+                        onClick = { onSessionClick(session.id) },
+                        onOpenItinerary = { onOpenItinerary(session.id) }
                     )
                 }
             }
@@ -226,6 +231,7 @@ private fun EmptyHistoryIllustration(
 private fun HistorySessionRow(
     session: HistorySession,
     onClick: () -> Unit,
+    onOpenItinerary: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     ElevatedCard(
@@ -250,6 +256,17 @@ private fun HistorySessionRow(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onClick) {
+                    Text("Chat")
+                }
+                TextButton(onClick = onOpenItinerary) {
+                    Text("Lịch trình")
+                }
+            }
         }
     }
 }
@@ -282,7 +299,8 @@ private fun HistoryScreenPreview() {
                 )
             ),
             onBack = {},
-            onSessionClick = {}
+            onSessionClick = {},
+            onOpenItinerary = {}
         )
     }
 }
@@ -294,7 +312,8 @@ private fun EmptyHistoryScreenPreview() {
         HistoryScreenContent(
             uiState = HistoryUiState(),
             onBack = {},
-            onSessionClick = {}
+            onSessionClick = {},
+            onOpenItinerary = {}
         )
     }
 }
@@ -306,7 +325,8 @@ private fun LoadingHistoryScreenPreview() {
         HistoryScreenContent(
             uiState = HistoryUiState(isLoading = true),
             onBack = {},
-            onSessionClick = {}
+            onSessionClick = {},
+            onOpenItinerary = {}
         )
     }
 }
