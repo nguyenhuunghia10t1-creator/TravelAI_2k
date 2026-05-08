@@ -126,15 +126,15 @@
     - [x] Room/local chat DB không bị cloud backup mặc định
     - [x] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
 
-- [ ] **TASK-012** — Trip planner form
+- [x] **TASK-012** — Trip planner form
   - **Why:** User cần nhập thông tin chuyến đi có cấu trúc thay vì chỉ chat tự do.
   - **What:** Thêm `TripPlannerScreen` cho điểm đến, số ngày, ngân sách, số người, phong cách, phương tiện, ghi chú.
   - **Touches:** `TripPlannerScreen.kt`, `TripPlannerViewModel.kt`, `NavGraph.kt`, `ChatScreen.kt`
   - **Acceptance:**
-    - [ ] Có route `planner`
-    - [ ] User nhập form và bấm tạo lịch trình
-    - [ ] Form validate các trường quan trọng, không crash khi bỏ trống optional
-    - [ ] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
+    - [x] Có route `planner`
+    - [x] User nhập form và bấm tạo lịch trình
+    - [x] Form validate các trường quan trọng, không crash khi bỏ trống optional
+    - [x] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
 
 - [ ] **TASK-013** — Trip profile prompt integration
   - **Why:** DeepSeek cần nhận thông tin chuyến đi có cấu trúc để lập lịch trình sát nhu cầu.

@@ -46,6 +46,7 @@ import com.travelai.ui.theme.TravelAITheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
+    onOpenPlanner: () -> Unit,
     onOpenHistory: () -> Unit,
     viewModel: ChatViewModel = hiltViewModel()
 ) {
@@ -56,6 +57,7 @@ fun ChatScreen(
         onInputChange = viewModel::onInputChange,
         onSend = viewModel::sendMessage,
         onRetry = viewModel::retryLastMessage,
+        onOpenPlanner = onOpenPlanner,
         onOpenHistory = onOpenHistory
     )
 }
@@ -67,6 +69,7 @@ private fun ChatScreenContent(
     onInputChange: (String) -> Unit,
     onSend: () -> Unit,
     onRetry: () -> Unit,
+    onOpenPlanner: () -> Unit,
     onOpenHistory: () -> Unit
 ) {
     val context = LocalContext.current
@@ -86,6 +89,9 @@ private fun ChatScreenContent(
                         enabled = shareText.isNotBlank()
                     ) {
                         Text("Chia sẻ")
+                    }
+                    TextButton(onClick = onOpenPlanner) {
+                        Text("Tạo chuyến")
                     }
                     TextButton(onClick = onOpenHistory) {
                         Text("Lịch sử")
@@ -326,6 +332,7 @@ private fun ChatScreenPreview() {
             onInputChange = {},
             onSend = {},
             onRetry = {},
+            onOpenPlanner = {},
             onOpenHistory = {}
         )
     }
@@ -340,6 +347,7 @@ private fun EmptyChatScreenPreview() {
             onInputChange = {},
             onSend = {},
             onRetry = {},
+            onOpenPlanner = {},
             onOpenHistory = {}
         )
     }
@@ -362,6 +370,7 @@ private fun LoadingChatScreenPreview() {
             onInputChange = {},
             onSend = {},
             onRetry = {},
+            onOpenPlanner = {},
             onOpenHistory = {}
         )
     }
@@ -385,6 +394,7 @@ private fun RetryErrorChatScreenPreview() {
             onInputChange = {},
             onSend = {},
             onRetry = {},
+            onOpenPlanner = {},
             onOpenHistory = {}
         )
     }
@@ -402,6 +412,7 @@ private fun OfflineChatScreenPreview() {
             onInputChange = {},
             onSend = {},
             onRetry = {},
+            onOpenPlanner = {},
             onOpenHistory = {}
         )
     }

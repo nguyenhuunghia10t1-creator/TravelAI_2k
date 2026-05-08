@@ -40,9 +40,17 @@ class ChatViewModel @Inject constructor(
         .get<String>(SESSION_ID_ARG)
         ?.toLongOrNull()
         ?.takeIf { it > 0 }
+    private val draftPrompt: String? = savedStateHandle
+        .get<String>(DRAFT_PROMPT_ARG)
+        ?.trim()
+        ?.takeIf { it.isNotBlank() }
 
     init {
-        loadInitialSession()
+        if (draftPrompt != null) {
+            _uiState.update { it.copy(inputText = draftPrompt) }
+        } else {
+            loadInitialSession()
+        }
     }
 
     fun onInputChange(inputText: String) {
@@ -386,6 +394,7 @@ private const val ROLE_SYSTEM = "system"
 private const val ROLE_USER = "user"
 private const val ROLE_ASSISTANT = "assistant"
 private const val SESSION_ID_ARG = "sessionId"
+private const val DRAFT_PROMPT_ARG = "draftPrompt"
 private const val API_RESPONSE_TIMEOUT_MS = 15_000L
 private const val TIMEOUT_MESSAGE = "Không phản hồi, thử lại?"
 private const val OFFLINE_MESSAGE = "Không có kết nối internet. Kiểm tra mạng rồi thử lại."

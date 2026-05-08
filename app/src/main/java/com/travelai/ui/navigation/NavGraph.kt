@@ -1,5 +1,6 @@
 package com.travelai.ui.navigation
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -10,6 +11,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.travelai.ui.chat.ChatScreen
 import com.travelai.ui.history.HistoryScreen
+import com.travelai.ui.planner.TripPlannerScreen
 
 @Composable
 fun NavGraph(
@@ -18,11 +20,34 @@ fun NavGraph(
 ) {
     NavHost(
         navController = navController,
-        startDestination = TravelAiRoutes.CHAT_ROUTE,
+        startDestination = TravelAiRoutes.PLANNER_ROUTE,
         modifier = modifier
     ) {
+        composable(route = TravelAiRoutes.PLANNER_ROUTE) {
+            TripPlannerScreen(
+                onOpenChat = {
+                    navController.navigate(TravelAiRoutes.CHAT_ROUTE) {
+                        launchSingleTop = true
+                    }
+                },
+                onOpenHistory = {
+                    navController.navigate(TravelAiRoutes.HISTORY_ROUTE) {
+                        launchSingleTop = true
+                    }
+                },
+                onCreateItinerary = { draftPrompt ->
+                    navController.navigate(TravelAiRoutes.chatRoute(draftPrompt = draftPrompt))
+                }
+            )
+        }
+
         composable(route = TravelAiRoutes.CHAT_ROUTE) {
             ChatScreen(
+                onOpenPlanner = {
+                    navController.navigate(TravelAiRoutes.PLANNER_ROUTE) {
+                        launchSingleTop = true
+                    }
+                },
                 onOpenHistory = {
                     navController.navigate(TravelAiRoutes.HISTORY_ROUTE) {
                         launchSingleTop = true
@@ -32,15 +57,24 @@ fun NavGraph(
         }
 
         composable(
-            route = TravelAiRoutes.CHAT_ROUTE_WITH_SESSION,
+            route = TravelAiRoutes.CHAT_ROUTE_WITH_ARGS,
             arguments = listOf(
                 navArgument(TravelAiRoutes.SESSION_ID_ARG) {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+                navArgument(TravelAiRoutes.DRAFT_PROMPT_ARG) {
                     type = NavType.StringType
                     defaultValue = ""
                 }
             )
         ) {
             ChatScreen(
+                onOpenPlanner = {
+                    navController.navigate(TravelAiRoutes.PLANNER_ROUTE) {
+                        launchSingleTop = true
+                    }
+                },
                 onOpenHistory = {
                     navController.navigate(TravelAiRoutes.HISTORY_ROUTE) {
                         launchSingleTop = true
@@ -53,7 +87,7 @@ fun NavGraph(
             HistoryScreen(
                 onBack = {
                     if (!navController.popBackStack()) {
-                        navController.navigate(TravelAiRoutes.CHAT_ROUTE)
+                        navController.navigate(TravelAiRoutes.PLANNER_ROUTE)
                     }
                 },
                 onSessionClick = { sessionId ->
@@ -65,10 +99,28 @@ fun NavGraph(
 }
 
 private object TravelAiRoutes {
+    const val PLANNER_ROUTE = "planner"
     const val CHAT_ROUTE = "chat"
     const val HISTORY_ROUTE = "history"
     const val SESSION_ID_ARG = "sessionId"
-    const val CHAT_ROUTE_WITH_SESSION = "$CHAT_ROUTE?$SESSION_ID_ARG={$SESSION_ID_ARG}"
+    const val DRAFT_PROMPT_ARG = "draftPrompt"
+    const val CHAT_ROUTE_WITH_ARGS =
+        "$CHAT_ROUTE?$SESSION_ID_ARG={$SESSION_ID_ARG}&$DRAFT_PROMPT_ARG={$DRAFT_PROMPT_ARG}"
 
-    fun chatRoute(sessionId: Long): String = "$CHAT_ROUTE?$SESSION_ID_ARG=$sessionId"
+    fun chatRoute(
+        sessionId: Long? = null,
+        draftPrompt: String? = null
+    ): String {
+        val arguments = buildList {
+            sessionId?.let { add("$SESSION_ID_ARG=$it") }
+            draftPrompt
+                ?.takeIf { it.isNotBlank() }
+                ?.let { add("$DRAFT_PROMPT_ARG=${Uri.encode(it)}") }
+        }
+        return if (arguments.isEmpty()) {
+            CHAT_ROUTE
+        } else {
+            "$CHAT_ROUTE?${arguments.joinToString("&")}"
+        }
+    }
 }

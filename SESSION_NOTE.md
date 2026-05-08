@@ -133,3 +133,16 @@
 - Files edited: `TASKS.md`, `AGENTS.md`, `app/build.gradle.kts`, `AndroidManifest.xml`, `backup_rules.xml`, `data_extraction_rules.xml`, `AppDatabase.kt`, `ExampleInstrumentedTest.kt`.
 - Files created: `app/schemas/com.travelai.data.db.AppDatabase/1.json`.
 - Verified `:app:assembleDebug`, `:app:testDebugUnitTest`, and `:app:lintDebug` passed using Android Studio JBR.
+
+# 2026-05-08 - TASK-012 Trip planner form
+
+- Added `planner` route as the app start destination with navigation to Chat and History.
+- Added `TripPlannerScreen` and `TripPlannerViewModel` for destination, day count, budget, people count, travel style, transport, and notes.
+- Added validation for required destination, positive day count, and positive people count; optional fields can stay blank.
+- Planner submit now opens Chat with a structured prompt prefilled, but it does not auto-call DeepSeek or save a trip profile yet; that remains `TASK-013`.
+- Added a Chat AppBar action to return to the planner.
+- Added unit coverage for planner validation and prompt creation.
+- Files edited: `TASKS.md`, `ChatScreen.kt`, `ChatViewModel.kt`, `NavGraph.kt`.
+- Files created: `TripPlannerScreen.kt`, `TripPlannerViewModel.kt`, `TripPlannerViewModelTest.kt`.
+- Verified `:app:assembleDebug`, `:app:testDebugUnitTest`, and `:app:lintDebug` passed using Android Studio JBR.
+- Gradle emitted the existing `LocalClipboardManager` deprecation warning in `ChatScreen.kt`; lint still passed.
