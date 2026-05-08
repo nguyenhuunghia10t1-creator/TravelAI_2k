@@ -194,3 +194,17 @@
 - Files edited: `TASKS.md`, `AGENTS.md`, `SESSION_NOTE.md`, `AppDatabase.kt`, `ChatDao.kt`, `ChatRepository.kt`, `AppModule.kt`, `ItineraryScreen.kt`, `ItineraryViewModel.kt`.
 - Files created: `BudgetItem.kt`, `BudgetItemEntity.kt`, `BudgetSection.kt`, `BudgetItemTest.kt`, `app/schemas/com.travelai.data.db.AppDatabase/4.json`.
 - Verified `:app:assembleDebug`, `:app:testDebugUnitTest`, and `:app:lintDebug` passed using Android Studio JBR.
+
+# 2026-05-08 - TASK-017 Travel checklist
+
+- Added `ChecklistItem` domain model with completed-count helper.
+- Added `ChecklistItemEntity`, Room database version 5, migration `MIGRATION_4_5`, and exported schema `app/schemas/com.travelai.data.db.AppDatabase/5.json`.
+- Extended `ChatDao` and `ChatRepository` with checklist CRUD scoped by `sessionId`, plus checklist loading through `StoredChatSession`.
+- Added `ChecklistSection` inside `ItineraryScreen` so users can add, delete, and tick travel preparation items next to the itinerary/budget tools.
+- Updated `ItineraryViewModel` with checklist draft state, validation, add/toggle/delete actions, and Room reload so checkbox state persists after app restart.
+- Updated `AGENTS.md` folder map to reflect Room version 5 and the new checklist files.
+- Added `ChecklistItemTest` for completed checklist count behavior.
+- Files edited: `TASKS.md`, `AGENTS.md`, `SESSION_NOTE.md`, `AppDatabase.kt`, `ChatDao.kt`, `ChatRepository.kt`, `AppModule.kt`, `ItineraryScreen.kt`, `ItineraryViewModel.kt`.
+- Files created: `ChecklistItem.kt`, `ChecklistItemEntity.kt`, `ChecklistSection.kt`, `ChecklistItemTest.kt`, `app/schemas/com.travelai.data.db.AppDatabase/5.json`.
+- Initial sandbox Gradle build failed because the sandbox could not access `C:\Users\nguye\AppData\Local\Android\Sdk\platforms\android-36\android.jar` and Kotlin daemon temp files; reran Gradle outside the sandbox with Android Studio JBR and repo-local Gradle/Android homes.
+- Verified `:app:assembleDebug`, `:app:testDebugUnitTest`, and `:app:lintDebug` passed using Android Studio JBR.

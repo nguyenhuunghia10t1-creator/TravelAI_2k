@@ -176,15 +176,15 @@
     - [x] Tổng chi phí tự cập nhật và lưu qua restart
     - [x] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
 
-- [ ] **TASK-017** — Travel checklist
+- [x] **TASK-017** — Travel checklist
   - **Why:** Checklist giúp app hữu ích sau khi đã lập lịch trình.
   - **What:** Thêm checklist chuẩn bị du lịch local-only, có checkbox lưu trạng thái theo session.
   - **Touches:** `ChecklistItem.kt`, `ChecklistSection.kt`, `ChatRepository.kt`, `ItineraryScreen.kt`
   - **Acceptance:**
-    - [ ] Checklist gắn với session
-    - [ ] User thêm/xóa/tick item
-    - [ ] Trạng thái checkbox lưu qua restart
-    - [ ] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
+    - [x] Checklist gắn với session
+    - [x] User thêm/xóa/tick item
+    - [x] Trạng thái checkbox lưu qua restart
+    - [x] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
 
 - [ ] **TASK-018** — Trip Library and polished export
   - **Why:** History cần trở thành nơi quản lý chuyến đi thật sự.

@@ -68,18 +68,20 @@ app/src/main/java/com/travelai/
 │   │   ├── DeepSeekModels.kt      # data class Request, Response, Message, Choice
 │   │   └── ApiClient.kt           # OkHttp singleton + Retrofit builder
 │   ├── db/
-│   │   ├── AppDatabase.kt         # Room @Database, version 4
+│   │   ├── AppDatabase.kt         # Room @Database, version 5
 │   │   ├── ChatDao.kt             # @Dao queries
 │   │   └── entities/
 │   │       ├── ChatSession.kt     # @Entity
 │   │       ├── ChatMessage.kt     # @Entity
 │   │       ├── TripProfileEntity.kt # @Entity trip profile theo session
 │   │       ├── TripPlanSnapshotEntity.kt # @Entity raw + parsed itinerary snapshot
-│   │       └── BudgetItemEntity.kt # @Entity budget item theo session
+│   │       ├── BudgetItemEntity.kt # @Entity budget item theo session
+│   │       └── ChecklistItemEntity.kt # @Entity checklist item theo session
 │   ├── model/
 │   │   ├── TripProfile.kt         # Domain model + prompt helpers cho planner
 │   │   ├── TripPlanSnapshot.kt    # Domain model itinerary theo ngày/buổi
-│   │   └── BudgetItem.kt          # Domain model + helpers cho budget planner
+│   │   ├── BudgetItem.kt          # Domain model + helpers cho budget planner
+│   │   └── ChecklistItem.kt       # Domain model + helpers cho travel checklist
 │   ├── parser/
 │   │   └── ItineraryParser.kt     # Parser output AI: Ngày X / Sáng / Chiều / Tối
 │   └── repository/
@@ -96,8 +98,9 @@ app/src/main/java/com/travelai/
 │   │   └── HistoryViewModel.kt
 │   ├── itinerary/
 │   │   ├── ItineraryScreen.kt     # UI lịch trình theo tab ngày + raw fallback
-│   │   ├── ItineraryViewModel.kt  # Load snapshot/raw itinerary + budget theo session
-│   │   └── BudgetSection.kt       # UI thêm/sửa/xóa budget item
+│   │   ├── ItineraryViewModel.kt  # Load snapshot/raw itinerary + budget/checklist theo session
+│   │   ├── BudgetSection.kt       # UI thêm/sửa/xóa budget item
+│   │   └── ChecklistSection.kt    # UI thêm/xóa/tick checklist item
 │   ├── navigation/
 │   │   └── NavGraph.kt            # NavHost, routes: "planner", "chat", "history", "itinerary/{sessionId}"
 │   └── theme/

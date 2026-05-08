@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.travelai.data.db.entities.BudgetItemEntity
+import com.travelai.data.db.entities.ChecklistItemEntity
 import com.travelai.data.db.entities.ChatMessageEntity
 import com.travelai.data.db.entities.ChatSessionEntity
 import com.travelai.data.db.entities.TripPlanSnapshotEntity
@@ -33,6 +34,9 @@ interface ChatDao {
     @Query("SELECT * FROM budget_items WHERE sessionId = :sessionId ORDER BY createdAt ASC, id ASC")
     suspend fun getBudgetItems(sessionId: Long): List<BudgetItemEntity>
 
+    @Query("SELECT * FROM checklist_items WHERE sessionId = :sessionId ORDER BY createdAt ASC, id ASC")
+    suspend fun getChecklistItems(sessionId: Long): List<ChecklistItemEntity>
+
     @Insert
     suspend fun insertSession(session: ChatSessionEntity): Long
 
@@ -47,6 +51,9 @@ interface ChatDao {
 
     @Insert
     suspend fun insertBudgetItem(item: BudgetItemEntity): Long
+
+    @Insert
+    suspend fun insertChecklistItem(item: ChecklistItemEntity): Long
 
     @Query(
         """
@@ -71,6 +78,24 @@ interface ChatDao {
 
     @Query("DELETE FROM budget_items WHERE id = :itemId AND sessionId = :sessionId")
     suspend fun deleteBudgetItem(sessionId: Long, itemId: Long)
+
+    @Query(
+        """
+        UPDATE checklist_items
+        SET isChecked = :isChecked,
+            updatedAt = :updatedAt
+        WHERE id = :itemId AND sessionId = :sessionId
+        """
+    )
+    suspend fun updateChecklistItemChecked(
+        sessionId: Long,
+        itemId: Long,
+        isChecked: Boolean,
+        updatedAt: Long
+    )
+
+    @Query("DELETE FROM checklist_items WHERE id = :itemId AND sessionId = :sessionId")
+    suspend fun deleteChecklistItem(sessionId: Long, itemId: Long)
 
     @Query("UPDATE chat_sessions SET updatedAt = :updatedAt WHERE id = :sessionId")
     suspend fun updateSessionUpdatedAt(sessionId: Long, updatedAt: Long)

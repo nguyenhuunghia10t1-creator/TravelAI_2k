@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.travelai.data.model.BudgetCategory
 import com.travelai.data.model.BudgetItem
+import com.travelai.data.model.ChecklistItem
 import com.travelai.data.model.TripPlanDay
 import com.travelai.data.model.parseBudgetAmount
 import com.travelai.data.repository.ChatRepository
@@ -72,6 +73,7 @@ class ItineraryViewModel @Inject constructor(
                         days = snapshot?.days.orEmpty(),
                         rawText = fallbackText,
                         budgetItems = session.budgetItems,
+                        checklistItems = session.checklistItems,
                         isLoading = false,
                         errorMessage = null
                     )
@@ -249,6 +251,128 @@ class ItineraryViewModel @Inject constructor(
         }
     }
 
+    fun onChecklistTitleChange(title: String) {
+        _uiState.update {
+            it.copy(
+                checklistDraftTitle = title,
+                checklistErrorMessage = null
+            )
+        }
+    }
+
+    fun addChecklistItem() {
+        val state = _uiState.value
+        val sessionId = state.sessionId ?: requestedSessionId
+        if (sessionId == null || sessionId <= 0L) {
+            _uiState.update { it.copy(checklistErrorMessage = "Không tìm thấy chuyến đi.") }
+            return
+        }
+
+        val title = state.checklistDraftTitle.trim()
+        if (title.isBlank()) {
+            _uiState.update { it.copy(checklistErrorMessage = "Nhập việc cần chuẩn bị.") }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isChecklistSaving = true,
+                    checklistErrorMessage = null
+                )
+            }
+
+            runCatching {
+                chatRepository.addChecklistItem(sessionId = sessionId, title = title)
+                chatRepository.getChecklistItems(sessionId)
+            }.onSuccess { checklistItems ->
+                _uiState.update {
+                    it.copy(
+                        checklistItems = checklistItems,
+                        checklistDraftTitle = "",
+                        isChecklistSaving = false,
+                        checklistErrorMessage = null
+                    )
+                }
+            }.onFailure { throwable ->
+                _uiState.update {
+                    it.copy(
+                        isChecklistSaving = false,
+                        checklistErrorMessage = throwable.message ?: "Không thể lưu checklist."
+                    )
+                }
+            }
+        }
+    }
+
+    fun toggleChecklistItem(item: ChecklistItem, isChecked: Boolean) {
+        val sessionId = _uiState.value.sessionId ?: requestedSessionId ?: return
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isChecklistSaving = true,
+                    checklistErrorMessage = null
+                )
+            }
+
+            runCatching {
+                chatRepository.updateChecklistItemChecked(
+                    sessionId = sessionId,
+                    itemId = item.id,
+                    isChecked = isChecked
+                )
+                chatRepository.getChecklistItems(sessionId)
+            }.onSuccess { checklistItems ->
+                _uiState.update {
+                    it.copy(
+                        checklistItems = checklistItems,
+                        isChecklistSaving = false,
+                        checklistErrorMessage = null
+                    )
+                }
+            }.onFailure { throwable ->
+                _uiState.update {
+                    it.copy(
+                        isChecklistSaving = false,
+                        checklistErrorMessage = throwable.message ?: "Không thể cập nhật checklist."
+                    )
+                }
+            }
+        }
+    }
+
+    fun deleteChecklistItem(item: ChecklistItem) {
+        val sessionId = _uiState.value.sessionId ?: requestedSessionId ?: return
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isChecklistSaving = true,
+                    checklistErrorMessage = null
+                )
+            }
+
+            runCatching {
+                chatRepository.deleteChecklistItem(sessionId = sessionId, itemId = item.id)
+                chatRepository.getChecklistItems(sessionId)
+            }.onSuccess { checklistItems ->
+                _uiState.update {
+                    it.copy(
+                        checklistItems = checklistItems,
+                        isChecklistSaving = false,
+                        checklistErrorMessage = null
+                    )
+                }
+            }.onFailure { throwable ->
+                _uiState.update {
+                    it.copy(
+                        isChecklistSaving = false,
+                        checklistErrorMessage = throwable.message ?: "Không thể xóa checklist."
+                    )
+                }
+            }
+        }
+    }
+
     private companion object {
         const val SESSION_ID_ARG = "sessionId"
         const val ROLE_ASSISTANT = "assistant"
@@ -264,6 +388,10 @@ data class ItineraryUiState(
     val budgetForm: BudgetFormState = BudgetFormState(),
     val budgetErrorMessage: String? = null,
     val isBudgetSaving: Boolean = false,
+    val checklistItems: List<ChecklistItem> = emptyList(),
+    val checklistDraftTitle: String = "",
+    val checklistErrorMessage: String? = null,
+    val isChecklistSaving: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )

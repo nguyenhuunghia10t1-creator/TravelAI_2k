@@ -40,7 +40,7 @@ object AppModule {
         AppDatabase::class.java,
         "travelai.db"
     )
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
         .build()
 
     @Provides
@@ -106,6 +106,27 @@ object AppModule {
             )
             db.execSQL(
                 "CREATE INDEX IF NOT EXISTS `index_budget_items_sessionId` ON `budget_items` (`sessionId`)"
+            )
+        }
+    }
+
+    private val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `checklist_items` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `sessionId` INTEGER NOT NULL,
+                    `title` TEXT NOT NULL,
+                    `isChecked` INTEGER NOT NULL,
+                    `createdAt` INTEGER NOT NULL,
+                    `updatedAt` INTEGER NOT NULL,
+                    FOREIGN KEY(`sessionId`) REFERENCES `chat_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_checklist_items_sessionId` ON `checklist_items` (`sessionId`)"
             )
         }
     }

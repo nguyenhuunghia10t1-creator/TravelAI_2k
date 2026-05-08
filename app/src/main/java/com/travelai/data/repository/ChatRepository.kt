@@ -6,12 +6,14 @@ import com.travelai.data.api.DeepSeekChatRequest
 import com.travelai.data.api.DeepSeekMessage
 import com.travelai.data.db.ChatDao
 import com.travelai.data.db.entities.BudgetItemEntity
+import com.travelai.data.db.entities.ChecklistItemEntity
 import com.travelai.data.db.entities.ChatMessageEntity
 import com.travelai.data.db.entities.ChatSessionEntity
 import com.travelai.data.db.entities.TripPlanSnapshotEntity
 import com.travelai.data.db.entities.TripProfileEntity
 import com.travelai.data.model.BudgetCategory
 import com.travelai.data.model.BudgetItem
+import com.travelai.data.model.ChecklistItem
 import com.travelai.data.model.TripPlanDay
 import com.travelai.data.model.TripPlanSnapshot
 import com.travelai.data.model.TripProfile
@@ -52,6 +54,7 @@ class ChatRepository @Inject constructor(
         val tripProfile = chatDao.getTripProfile(session.id)
         val tripPlanSnapshot = chatDao.getTripPlanSnapshot(session.id)
         val budgetItems = chatDao.getBudgetItems(session.id)
+        val checklistItems = chatDao.getChecklistItems(session.id)
 
         return StoredChatSession(
             id = session.id,
@@ -61,6 +64,7 @@ class ChatRepository @Inject constructor(
             tripProfile = tripProfile?.toTripProfile(),
             tripPlanSnapshot = tripPlanSnapshot?.toTripPlanSnapshot(gson),
             budgetItems = budgetItems.map { it.toBudgetItem() },
+            checklistItems = checklistItems.map { it.toChecklistItem() },
             messages = messages.map {
                 StoredChatMessage(
                     role = it.role,
@@ -110,6 +114,9 @@ class ChatRepository @Inject constructor(
 
     suspend fun getBudgetItems(sessionId: Long): List<BudgetItem> =
         chatDao.getBudgetItems(sessionId).map { it.toBudgetItem() }
+
+    suspend fun getChecklistItems(sessionId: Long): List<ChecklistItem> =
+        chatDao.getChecklistItems(sessionId).map { it.toChecklistItem() }
 
     suspend fun addBudgetItem(
         sessionId: Long,
@@ -166,6 +173,52 @@ class ChatRepository @Inject constructor(
 
     suspend fun deleteBudgetItem(sessionId: Long, itemId: Long) {
         chatDao.deleteBudgetItem(sessionId = sessionId, itemId = itemId)
+        chatDao.updateSessionUpdatedAt(sessionId, System.currentTimeMillis())
+    }
+
+    suspend fun addChecklistItem(
+        sessionId: Long,
+        title: String
+    ): ChecklistItem {
+        val now = System.currentTimeMillis()
+        val cleanTitle = title.trim()
+        val itemId = chatDao.insertChecklistItem(
+            ChecklistItemEntity(
+                sessionId = sessionId,
+                title = cleanTitle,
+                isChecked = false,
+                createdAt = now,
+                updatedAt = now
+            )
+        )
+        chatDao.updateSessionUpdatedAt(sessionId, now)
+        return ChecklistItem(
+            id = itemId,
+            sessionId = sessionId,
+            title = cleanTitle,
+            isChecked = false,
+            createdAt = now,
+            updatedAt = now
+        )
+    }
+
+    suspend fun updateChecklistItemChecked(
+        sessionId: Long,
+        itemId: Long,
+        isChecked: Boolean
+    ) {
+        val now = System.currentTimeMillis()
+        chatDao.updateChecklistItemChecked(
+            sessionId = sessionId,
+            itemId = itemId,
+            isChecked = isChecked,
+            updatedAt = now
+        )
+        chatDao.updateSessionUpdatedAt(sessionId, now)
+    }
+
+    suspend fun deleteChecklistItem(sessionId: Long, itemId: Long) {
+        chatDao.deleteChecklistItem(sessionId = sessionId, itemId = itemId)
         chatDao.updateSessionUpdatedAt(sessionId, System.currentTimeMillis())
     }
 
@@ -263,6 +316,7 @@ data class StoredChatSession(
     val tripProfile: TripProfile?,
     val tripPlanSnapshot: TripPlanSnapshot?,
     val budgetItems: List<BudgetItem>,
+    val checklistItems: List<ChecklistItem>,
     val messages: List<StoredChatMessage>
 )
 
@@ -324,3 +378,12 @@ private fun BudgetItemEntity.toBudgetItem(): BudgetItem = BudgetItem(
 private fun String.toBudgetCategory(): BudgetCategory =
     runCatching { BudgetCategory.valueOf(this) }
         .getOrDefault(BudgetCategory.INCIDENTAL)
+
+private fun ChecklistItemEntity.toChecklistItem(): ChecklistItem = ChecklistItem(
+    id = id,
+    sessionId = sessionId,
+    title = title,
+    isChecked = isChecked,
+    createdAt = createdAt,
+    updatedAt = updatedAt
+)

@@ -37,6 +37,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.travelai.data.model.BudgetCategory
 import com.travelai.data.model.BudgetItem
+import com.travelai.data.model.ChecklistItem
 import com.travelai.data.model.TripPlanDay
 import com.travelai.data.model.TripPlanPeriod
 import com.travelai.data.model.TripPlanPeriodType
@@ -61,7 +62,11 @@ fun ItineraryScreen(
         onSaveBudgetItem = viewModel::saveBudgetItem,
         onEditBudgetItem = viewModel::editBudgetItem,
         onDeleteBudgetItem = viewModel::deleteBudgetItem,
-        onCancelBudgetEdit = viewModel::cancelBudgetEdit
+        onCancelBudgetEdit = viewModel::cancelBudgetEdit,
+        onChecklistTitleChange = viewModel::onChecklistTitleChange,
+        onAddChecklistItem = viewModel::addChecklistItem,
+        onToggleChecklistItem = viewModel::toggleChecklistItem,
+        onDeleteChecklistItem = viewModel::deleteChecklistItem
     )
 }
 
@@ -78,7 +83,11 @@ private fun ItineraryScreenContent(
     onSaveBudgetItem: () -> Unit = {},
     onEditBudgetItem: (BudgetItem) -> Unit = {},
     onDeleteBudgetItem: (BudgetItem) -> Unit = {},
-    onCancelBudgetEdit: () -> Unit = {}
+    onCancelBudgetEdit: () -> Unit = {},
+    onChecklistTitleChange: (String) -> Unit = {},
+    onAddChecklistItem: () -> Unit = {},
+    onToggleChecklistItem: (ChecklistItem, Boolean) -> Unit = { _, _ -> },
+    onDeleteChecklistItem: (ChecklistItem) -> Unit = {}
 ) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -133,6 +142,10 @@ private fun ItineraryScreenContent(
                 onEditBudgetItem = onEditBudgetItem,
                 onDeleteBudgetItem = onDeleteBudgetItem,
                 onCancelBudgetEdit = onCancelBudgetEdit,
+                onChecklistTitleChange = onChecklistTitleChange,
+                onAddChecklistItem = onAddChecklistItem,
+                onToggleChecklistItem = onToggleChecklistItem,
+                onDeleteChecklistItem = onDeleteChecklistItem,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
@@ -149,6 +162,10 @@ private fun ItineraryScreenContent(
                 onEditBudgetItem = onEditBudgetItem,
                 onDeleteBudgetItem = onDeleteBudgetItem,
                 onCancelBudgetEdit = onCancelBudgetEdit,
+                onChecklistTitleChange = onChecklistTitleChange,
+                onAddChecklistItem = onAddChecklistItem,
+                onToggleChecklistItem = onToggleChecklistItem,
+                onDeleteChecklistItem = onDeleteChecklistItem,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
@@ -164,6 +181,10 @@ private fun ItineraryScreenContent(
                 onEditBudgetItem = onEditBudgetItem,
                 onDeleteBudgetItem = onDeleteBudgetItem,
                 onCancelBudgetEdit = onCancelBudgetEdit,
+                onChecklistTitleChange = onChecklistTitleChange,
+                onAddChecklistItem = onAddChecklistItem,
+                onToggleChecklistItem = onToggleChecklistItem,
+                onDeleteChecklistItem = onDeleteChecklistItem,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
@@ -184,6 +205,10 @@ private fun ParsedItineraryContent(
     onEditBudgetItem: (BudgetItem) -> Unit,
     onDeleteBudgetItem: (BudgetItem) -> Unit,
     onCancelBudgetEdit: () -> Unit,
+    onChecklistTitleChange: (String) -> Unit,
+    onAddChecklistItem: () -> Unit,
+    onToggleChecklistItem: (ChecklistItem, Boolean) -> Unit,
+    onDeleteChecklistItem: (ChecklistItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var selectedDayIndex by rememberSaveable { mutableIntStateOf(0) }
@@ -221,20 +246,21 @@ private fun ParsedItineraryContent(
             ) { period ->
                 PeriodCard(period = period)
             }
-            item(key = "budget-section") {
-                BudgetSection(
-                    budgetItems = uiState.budgetItems,
-                    formState = uiState.budgetForm,
-                    errorMessage = uiState.budgetErrorMessage,
-                    isSaving = uiState.isBudgetSaving,
-                    onCategoryChange = onBudgetCategoryChange,
-                    onTitleChange = onBudgetTitleChange,
-                    onAmountChange = onBudgetAmountChange,
-                    onNoteChange = onBudgetNoteChange,
-                    onSave = onSaveBudgetItem,
-                    onEdit = onEditBudgetItem,
-                    onDelete = onDeleteBudgetItem,
-                    onCancelEdit = onCancelBudgetEdit
+            item(key = "trip-planning-sections") {
+                TripPlanningSections(
+                    uiState = uiState,
+                    onBudgetCategoryChange = onBudgetCategoryChange,
+                    onBudgetTitleChange = onBudgetTitleChange,
+                    onBudgetAmountChange = onBudgetAmountChange,
+                    onBudgetNoteChange = onBudgetNoteChange,
+                    onSaveBudgetItem = onSaveBudgetItem,
+                    onEditBudgetItem = onEditBudgetItem,
+                    onDeleteBudgetItem = onDeleteBudgetItem,
+                    onCancelBudgetEdit = onCancelBudgetEdit,
+                    onChecklistTitleChange = onChecklistTitleChange,
+                    onAddChecklistItem = onAddChecklistItem,
+                    onToggleChecklistItem = onToggleChecklistItem,
+                    onDeleteChecklistItem = onDeleteChecklistItem
                 )
             }
         }
@@ -310,6 +336,10 @@ private fun RawItineraryContent(
     onEditBudgetItem: (BudgetItem) -> Unit,
     onDeleteBudgetItem: (BudgetItem) -> Unit,
     onCancelBudgetEdit: () -> Unit,
+    onChecklistTitleChange: (String) -> Unit,
+    onAddChecklistItem: () -> Unit,
+    onToggleChecklistItem: (ChecklistItem, Boolean) -> Unit,
+    onDeleteChecklistItem: (ChecklistItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -337,20 +367,21 @@ private fun RawItineraryContent(
                 }
             }
         }
-        item(key = "budget-section") {
-            BudgetSection(
-                budgetItems = uiState.budgetItems,
-                formState = uiState.budgetForm,
-                errorMessage = uiState.budgetErrorMessage,
-                isSaving = uiState.isBudgetSaving,
-                onCategoryChange = onBudgetCategoryChange,
-                onTitleChange = onBudgetTitleChange,
-                onAmountChange = onBudgetAmountChange,
-                onNoteChange = onBudgetNoteChange,
-                onSave = onSaveBudgetItem,
-                onEdit = onEditBudgetItem,
-                onDelete = onDeleteBudgetItem,
-                onCancelEdit = onCancelBudgetEdit
+        item(key = "trip-planning-sections") {
+            TripPlanningSections(
+                uiState = uiState,
+                onBudgetCategoryChange = onBudgetCategoryChange,
+                onBudgetTitleChange = onBudgetTitleChange,
+                onBudgetAmountChange = onBudgetAmountChange,
+                onBudgetNoteChange = onBudgetNoteChange,
+                onSaveBudgetItem = onSaveBudgetItem,
+                onEditBudgetItem = onEditBudgetItem,
+                onDeleteBudgetItem = onDeleteBudgetItem,
+                onCancelBudgetEdit = onCancelBudgetEdit,
+                onChecklistTitleChange = onChecklistTitleChange,
+                onAddChecklistItem = onAddChecklistItem,
+                onToggleChecklistItem = onToggleChecklistItem,
+                onDeleteChecklistItem = onDeleteChecklistItem
             )
         }
     }
@@ -367,6 +398,10 @@ private fun EmptyItineraryContent(
     onEditBudgetItem: (BudgetItem) -> Unit,
     onDeleteBudgetItem: (BudgetItem) -> Unit,
     onCancelBudgetEdit: () -> Unit,
+    onChecklistTitleChange: (String) -> Unit,
+    onAddChecklistItem: () -> Unit,
+    onToggleChecklistItem: (ChecklistItem, Boolean) -> Unit,
+    onDeleteChecklistItem: (ChecklistItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -377,22 +412,71 @@ private fun EmptyItineraryContent(
         item(key = "empty-itinerary") {
             EmptyItineraryState(modifier = Modifier.fillMaxWidth())
         }
-        item(key = "budget-section") {
-            BudgetSection(
-                budgetItems = uiState.budgetItems,
-                formState = uiState.budgetForm,
-                errorMessage = uiState.budgetErrorMessage,
-                isSaving = uiState.isBudgetSaving,
-                onCategoryChange = onBudgetCategoryChange,
-                onTitleChange = onBudgetTitleChange,
-                onAmountChange = onBudgetAmountChange,
-                onNoteChange = onBudgetNoteChange,
-                onSave = onSaveBudgetItem,
-                onEdit = onEditBudgetItem,
-                onDelete = onDeleteBudgetItem,
-                onCancelEdit = onCancelBudgetEdit
+        item(key = "trip-planning-sections") {
+            TripPlanningSections(
+                uiState = uiState,
+                onBudgetCategoryChange = onBudgetCategoryChange,
+                onBudgetTitleChange = onBudgetTitleChange,
+                onBudgetAmountChange = onBudgetAmountChange,
+                onBudgetNoteChange = onBudgetNoteChange,
+                onSaveBudgetItem = onSaveBudgetItem,
+                onEditBudgetItem = onEditBudgetItem,
+                onDeleteBudgetItem = onDeleteBudgetItem,
+                onCancelBudgetEdit = onCancelBudgetEdit,
+                onChecklistTitleChange = onChecklistTitleChange,
+                onAddChecklistItem = onAddChecklistItem,
+                onToggleChecklistItem = onToggleChecklistItem,
+                onDeleteChecklistItem = onDeleteChecklistItem
             )
         }
+    }
+}
+
+@Composable
+private fun TripPlanningSections(
+    uiState: ItineraryUiState,
+    onBudgetCategoryChange: (BudgetCategory) -> Unit,
+    onBudgetTitleChange: (String) -> Unit,
+    onBudgetAmountChange: (String) -> Unit,
+    onBudgetNoteChange: (String) -> Unit,
+    onSaveBudgetItem: () -> Unit,
+    onEditBudgetItem: (BudgetItem) -> Unit,
+    onDeleteBudgetItem: (BudgetItem) -> Unit,
+    onCancelBudgetEdit: () -> Unit,
+    onChecklistTitleChange: (String) -> Unit,
+    onAddChecklistItem: () -> Unit,
+    onToggleChecklistItem: (ChecklistItem, Boolean) -> Unit,
+    onDeleteChecklistItem: (ChecklistItem) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        BudgetSection(
+            budgetItems = uiState.budgetItems,
+            formState = uiState.budgetForm,
+            errorMessage = uiState.budgetErrorMessage,
+            isSaving = uiState.isBudgetSaving,
+            onCategoryChange = onBudgetCategoryChange,
+            onTitleChange = onBudgetTitleChange,
+            onAmountChange = onBudgetAmountChange,
+            onNoteChange = onBudgetNoteChange,
+            onSave = onSaveBudgetItem,
+            onEdit = onEditBudgetItem,
+            onDelete = onDeleteBudgetItem,
+            onCancelEdit = onCancelBudgetEdit
+        )
+        ChecklistSection(
+            checklistItems = uiState.checklistItems,
+            draftTitle = uiState.checklistDraftTitle,
+            errorMessage = uiState.checklistErrorMessage,
+            isSaving = uiState.isChecklistSaving,
+            onDraftTitleChange = onChecklistTitleChange,
+            onAdd = onAddChecklistItem,
+            onToggle = onToggleChecklistItem,
+            onDelete = onDeleteChecklistItem
+        )
     }
 }
 

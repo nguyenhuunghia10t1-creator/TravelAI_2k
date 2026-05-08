@@ -3,6 +3,7 @@ package com.travelai.data.db
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.travelai.data.db.entities.BudgetItemEntity
+import com.travelai.data.db.entities.ChecklistItemEntity
 import com.travelai.data.db.entities.ChatMessageEntity
 import com.travelai.data.db.entities.ChatSessionEntity
 import com.travelai.data.db.entities.TripPlanSnapshotEntity
@@ -14,9 +15,10 @@ import com.travelai.data.db.entities.TripProfileEntity
         ChatMessageEntity::class,
         TripProfileEntity::class,
         TripPlanSnapshotEntity::class,
-        BudgetItemEntity::class
+        BudgetItemEntity::class,
+        ChecklistItemEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
