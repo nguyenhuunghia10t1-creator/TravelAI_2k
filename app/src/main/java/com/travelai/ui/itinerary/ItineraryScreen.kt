@@ -35,6 +35,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.travelai.data.model.BudgetCategory
+import com.travelai.data.model.BudgetItem
 import com.travelai.data.model.TripPlanDay
 import com.travelai.data.model.TripPlanPeriod
 import com.travelai.data.model.TripPlanPeriodType
@@ -51,7 +53,15 @@ fun ItineraryScreen(
     ItineraryScreenContent(
         uiState = uiState,
         onBack = onBack,
-        onOpenChat = onOpenChat
+        onOpenChat = onOpenChat,
+        onBudgetCategoryChange = viewModel::onBudgetCategoryChange,
+        onBudgetTitleChange = viewModel::onBudgetTitleChange,
+        onBudgetAmountChange = viewModel::onBudgetAmountChange,
+        onBudgetNoteChange = viewModel::onBudgetNoteChange,
+        onSaveBudgetItem = viewModel::saveBudgetItem,
+        onEditBudgetItem = viewModel::editBudgetItem,
+        onDeleteBudgetItem = viewModel::deleteBudgetItem,
+        onCancelBudgetEdit = viewModel::cancelBudgetEdit
     )
 }
 
@@ -60,7 +70,15 @@ fun ItineraryScreen(
 private fun ItineraryScreenContent(
     uiState: ItineraryUiState,
     onBack: () -> Unit,
-    onOpenChat: (Long) -> Unit
+    onOpenChat: (Long) -> Unit,
+    onBudgetCategoryChange: (BudgetCategory) -> Unit = {},
+    onBudgetTitleChange: (String) -> Unit = {},
+    onBudgetAmountChange: (String) -> Unit = {},
+    onBudgetNoteChange: (String) -> Unit = {},
+    onSaveBudgetItem: () -> Unit = {},
+    onEditBudgetItem: (BudgetItem) -> Unit = {},
+    onDeleteBudgetItem: (BudgetItem) -> Unit = {},
+    onCancelBudgetEdit: () -> Unit = {}
 ) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -106,6 +124,15 @@ private fun ItineraryScreenContent(
 
             uiState.days.isNotEmpty() -> ParsedItineraryContent(
                 days = uiState.days,
+                uiState = uiState,
+                onBudgetCategoryChange = onBudgetCategoryChange,
+                onBudgetTitleChange = onBudgetTitleChange,
+                onBudgetAmountChange = onBudgetAmountChange,
+                onBudgetNoteChange = onBudgetNoteChange,
+                onSaveBudgetItem = onSaveBudgetItem,
+                onEditBudgetItem = onEditBudgetItem,
+                onDeleteBudgetItem = onDeleteBudgetItem,
+                onCancelBudgetEdit = onCancelBudgetEdit,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
@@ -113,21 +140,50 @@ private fun ItineraryScreenContent(
 
             uiState.rawText.isNotBlank() -> RawItineraryContent(
                 rawText = uiState.rawText,
+                uiState = uiState,
+                onBudgetCategoryChange = onBudgetCategoryChange,
+                onBudgetTitleChange = onBudgetTitleChange,
+                onBudgetAmountChange = onBudgetAmountChange,
+                onBudgetNoteChange = onBudgetNoteChange,
+                onSaveBudgetItem = onSaveBudgetItem,
+                onEditBudgetItem = onEditBudgetItem,
+                onDeleteBudgetItem = onDeleteBudgetItem,
+                onCancelBudgetEdit = onCancelBudgetEdit,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
             )
 
-            else -> CenterContent(modifier = Modifier.padding(innerPadding)) {
-                EmptyItineraryState()
+            else -> EmptyItineraryContent(
+                uiState = uiState,
+                onBudgetCategoryChange = onBudgetCategoryChange,
+                onBudgetTitleChange = onBudgetTitleChange,
+                onBudgetAmountChange = onBudgetAmountChange,
+                onBudgetNoteChange = onBudgetNoteChange,
+                onSaveBudgetItem = onSaveBudgetItem,
+                onEditBudgetItem = onEditBudgetItem,
+                onDeleteBudgetItem = onDeleteBudgetItem,
+                onCancelBudgetEdit = onCancelBudgetEdit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            )
             }
         }
     }
-}
 
 @Composable
 private fun ParsedItineraryContent(
     days: List<TripPlanDay>,
+    uiState: ItineraryUiState,
+    onBudgetCategoryChange: (BudgetCategory) -> Unit,
+    onBudgetTitleChange: (String) -> Unit,
+    onBudgetAmountChange: (String) -> Unit,
+    onBudgetNoteChange: (String) -> Unit,
+    onSaveBudgetItem: () -> Unit,
+    onEditBudgetItem: (BudgetItem) -> Unit,
+    onDeleteBudgetItem: (BudgetItem) -> Unit,
+    onCancelBudgetEdit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var selectedDayIndex by rememberSaveable { mutableIntStateOf(0) }
@@ -164,6 +220,22 @@ private fun ParsedItineraryContent(
                 key = { period -> period.period.name }
             ) { period ->
                 PeriodCard(period = period)
+            }
+            item(key = "budget-section") {
+                BudgetSection(
+                    budgetItems = uiState.budgetItems,
+                    formState = uiState.budgetForm,
+                    errorMessage = uiState.budgetErrorMessage,
+                    isSaving = uiState.isBudgetSaving,
+                    onCategoryChange = onBudgetCategoryChange,
+                    onTitleChange = onBudgetTitleChange,
+                    onAmountChange = onBudgetAmountChange,
+                    onNoteChange = onBudgetNoteChange,
+                    onSave = onSaveBudgetItem,
+                    onEdit = onEditBudgetItem,
+                    onDelete = onDeleteBudgetItem,
+                    onCancelEdit = onCancelBudgetEdit
+                )
             }
         }
     }
@@ -229,6 +301,15 @@ private fun PeriodCard(
 @Composable
 private fun RawItineraryContent(
     rawText: String,
+    uiState: ItineraryUiState,
+    onBudgetCategoryChange: (BudgetCategory) -> Unit,
+    onBudgetTitleChange: (String) -> Unit,
+    onBudgetAmountChange: (String) -> Unit,
+    onBudgetNoteChange: (String) -> Unit,
+    onSaveBudgetItem: () -> Unit,
+    onEditBudgetItem: (BudgetItem) -> Unit,
+    onDeleteBudgetItem: (BudgetItem) -> Unit,
+    onCancelBudgetEdit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -255,6 +336,62 @@ private fun RawItineraryContent(
                     )
                 }
             }
+        }
+        item(key = "budget-section") {
+            BudgetSection(
+                budgetItems = uiState.budgetItems,
+                formState = uiState.budgetForm,
+                errorMessage = uiState.budgetErrorMessage,
+                isSaving = uiState.isBudgetSaving,
+                onCategoryChange = onBudgetCategoryChange,
+                onTitleChange = onBudgetTitleChange,
+                onAmountChange = onBudgetAmountChange,
+                onNoteChange = onBudgetNoteChange,
+                onSave = onSaveBudgetItem,
+                onEdit = onEditBudgetItem,
+                onDelete = onDeleteBudgetItem,
+                onCancelEdit = onCancelBudgetEdit
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyItineraryContent(
+    uiState: ItineraryUiState,
+    onBudgetCategoryChange: (BudgetCategory) -> Unit,
+    onBudgetTitleChange: (String) -> Unit,
+    onBudgetAmountChange: (String) -> Unit,
+    onBudgetNoteChange: (String) -> Unit,
+    onSaveBudgetItem: () -> Unit,
+    onEditBudgetItem: (BudgetItem) -> Unit,
+    onDeleteBudgetItem: (BudgetItem) -> Unit,
+    onCancelBudgetEdit: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item(key = "empty-itinerary") {
+            EmptyItineraryState(modifier = Modifier.fillMaxWidth())
+        }
+        item(key = "budget-section") {
+            BudgetSection(
+                budgetItems = uiState.budgetItems,
+                formState = uiState.budgetForm,
+                errorMessage = uiState.budgetErrorMessage,
+                isSaving = uiState.isBudgetSaving,
+                onCategoryChange = onBudgetCategoryChange,
+                onTitleChange = onBudgetTitleChange,
+                onAmountChange = onBudgetAmountChange,
+                onNoteChange = onBudgetNoteChange,
+                onSave = onSaveBudgetItem,
+                onEdit = onEditBudgetItem,
+                onDelete = onDeleteBudgetItem,
+                onCancelEdit = onCancelBudgetEdit
+            )
         }
     }
 }

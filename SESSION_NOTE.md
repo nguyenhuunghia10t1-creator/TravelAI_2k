@@ -182,3 +182,15 @@
 - Files edited: `TASKS.md`, `AGENTS.md`, `SESSION_NOTE.md`, `ChatScreen.kt`, `ChatViewModel.kt`, `HistoryScreen.kt`, `NavGraph.kt`.
 - Files created: `ItineraryScreen.kt`, `ItineraryViewModel.kt`.
 - Verified `:app:assembleDebug`, `:app:testDebugUnitTest`, and `:app:lintDebug` passed using Android Studio JBR.
+
+# 2026-05-08 - TASK-016 Budget planner
+
+- Added `BudgetItem` domain model with budget categories, VND amount parsing, formatting, and total helpers.
+- Added `BudgetItemEntity`, Room database version 4, migration `MIGRATION_3_4`, and exported schema `app/schemas/com.travelai.data.db.AppDatabase/4.json`.
+- Extended `ChatDao` and `ChatRepository` with budget CRUD scoped by `sessionId`, plus budget loading through `StoredChatSession`.
+- Added `BudgetSection` inside `ItineraryScreen` so users can add, edit, delete, and review trip budget items with an auto-updating total.
+- Updated `ItineraryViewModel` with budget form state, validation, save/edit/delete actions, and reload from Room so data persists after app restart.
+- Added `BudgetItemTest` for amount parsing, total calculation, and VND display suffix.
+- Files edited: `TASKS.md`, `AGENTS.md`, `SESSION_NOTE.md`, `AppDatabase.kt`, `ChatDao.kt`, `ChatRepository.kt`, `AppModule.kt`, `ItineraryScreen.kt`, `ItineraryViewModel.kt`.
+- Files created: `BudgetItem.kt`, `BudgetItemEntity.kt`, `BudgetSection.kt`, `BudgetItemTest.kt`, `app/schemas/com.travelai.data.db.AppDatabase/4.json`.
+- Verified `:app:assembleDebug`, `:app:testDebugUnitTest`, and `:app:lintDebug` passed using Android Studio JBR.

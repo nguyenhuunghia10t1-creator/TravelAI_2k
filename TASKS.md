@@ -166,15 +166,15 @@
     - [x] Session chưa có parsed itinerary vẫn hiển thị raw response
     - [x] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
 
-- [ ] **TASK-016** — Budget planner
+- [x] **TASK-016** — Budget planner
   - **Why:** Ngân sách là yếu tố đặc trưng của trợ lý du lịch tự túc.
   - **What:** Thêm budget item local cho ăn uống, di chuyển, vé tham quan, khách sạn, phát sinh và tổng dự kiến.
   - **Touches:** `BudgetItem.kt`, `BudgetSection.kt`, `ChatRepository.kt`, `ItineraryScreen.kt`
   - **Acceptance:**
-    - [ ] Budget gắn với session
-    - [ ] User thêm/sửa/xóa budget item
-    - [ ] Tổng chi phí tự cập nhật và lưu qua restart
-    - [ ] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
+    - [x] Budget gắn với session
+    - [x] User thêm/sửa/xóa budget item
+    - [x] Tổng chi phí tự cập nhật và lưu qua restart
+    - [x] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
 
 - [ ] **TASK-017** — Travel checklist
   - **Why:** Checklist giúp app hữu ích sau khi đã lập lịch trình.

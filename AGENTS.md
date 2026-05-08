@@ -68,16 +68,18 @@ app/src/main/java/com/travelai/
 │   │   ├── DeepSeekModels.kt      # data class Request, Response, Message, Choice
 │   │   └── ApiClient.kt           # OkHttp singleton + Retrofit builder
 │   ├── db/
-│   │   ├── AppDatabase.kt         # Room @Database, version 3
+│   │   ├── AppDatabase.kt         # Room @Database, version 4
 │   │   ├── ChatDao.kt             # @Dao queries
 │   │   └── entities/
 │   │       ├── ChatSession.kt     # @Entity
 │   │       ├── ChatMessage.kt     # @Entity
 │   │       ├── TripProfileEntity.kt # @Entity trip profile theo session
-│   │       └── TripPlanSnapshotEntity.kt # @Entity raw + parsed itinerary snapshot
+│   │       ├── TripPlanSnapshotEntity.kt # @Entity raw + parsed itinerary snapshot
+│   │       └── BudgetItemEntity.kt # @Entity budget item theo session
 │   ├── model/
 │   │   ├── TripProfile.kt         # Domain model + prompt helpers cho planner
-│   │   └── TripPlanSnapshot.kt    # Domain model itinerary theo ngày/buổi
+│   │   ├── TripPlanSnapshot.kt    # Domain model itinerary theo ngày/buổi
+│   │   └── BudgetItem.kt          # Domain model + helpers cho budget planner
 │   ├── parser/
 │   │   └── ItineraryParser.kt     # Parser output AI: Ngày X / Sáng / Chiều / Tối
 │   └── repository/
@@ -94,7 +96,8 @@ app/src/main/java/com/travelai/
 │   │   └── HistoryViewModel.kt
 │   ├── itinerary/
 │   │   ├── ItineraryScreen.kt     # UI lịch trình theo tab ngày + raw fallback
-│   │   └── ItineraryViewModel.kt  # Load snapshot/raw itinerary theo session
+│   │   ├── ItineraryViewModel.kt  # Load snapshot/raw itinerary + budget theo session
+│   │   └── BudgetSection.kt       # UI thêm/sửa/xóa budget item
 │   ├── navigation/
 │   │   └── NavGraph.kt            # NavHost, routes: "planner", "chat", "history", "itinerary/{sessionId}"
 │   └── theme/
@@ -162,6 +165,8 @@ app/src/main/java/com/travelai/
   tạo title và đưa context vào prompt DeepSeek.
 - **Lịch trình** — output AI format ngày/buổi. Vẫn lưu như Message, đồng thời có
   `TripPlanSnapshotEntity` local để giữ raw response và parsed snapshot khi parser nhận diện được.
+- **Budget item** — khoản chi dự kiến local-only theo `sessionId`, có category,
+  title, amount VND, note; dùng trong `ItineraryScreen`.
 - **System prompt** — instruction gửi kèm mỗi API call để AI "biết" mình là
   trợ lý du lịch. Xem `Constants.kt`.
 - **Conversation history** — toàn bộ messages trong session, gửi lên DeepSeek

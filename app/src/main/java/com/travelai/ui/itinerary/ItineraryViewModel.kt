@@ -3,7 +3,10 @@ package com.travelai.ui.itinerary
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.travelai.data.model.BudgetCategory
+import com.travelai.data.model.BudgetItem
 import com.travelai.data.model.TripPlanDay
+import com.travelai.data.model.parseBudgetAmount
 import com.travelai.data.repository.ChatRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,6 +71,7 @@ class ItineraryViewModel @Inject constructor(
                         title = session.title,
                         days = snapshot?.days.orEmpty(),
                         rawText = fallbackText,
+                        budgetItems = session.budgetItems,
                         isLoading = false,
                         errorMessage = null
                     )
@@ -77,6 +81,168 @@ class ItineraryViewModel @Inject constructor(
                     it.copy(
                         isLoading = false,
                         errorMessage = throwable.message ?: "Không thể tải lịch trình."
+                    )
+                }
+            }
+        }
+    }
+
+    fun onBudgetCategoryChange(category: BudgetCategory) {
+        _uiState.update {
+            it.copy(
+                budgetForm = it.budgetForm.copy(category = category),
+                budgetErrorMessage = null
+            )
+        }
+    }
+
+    fun onBudgetTitleChange(title: String) {
+        _uiState.update {
+            it.copy(
+                budgetForm = it.budgetForm.copy(title = title),
+                budgetErrorMessage = null
+            )
+        }
+    }
+
+    fun onBudgetAmountChange(amountText: String) {
+        _uiState.update {
+            it.copy(
+                budgetForm = it.budgetForm.copy(amountText = amountText),
+                budgetErrorMessage = null
+            )
+        }
+    }
+
+    fun onBudgetNoteChange(note: String) {
+        _uiState.update {
+            it.copy(
+                budgetForm = it.budgetForm.copy(note = note),
+                budgetErrorMessage = null
+            )
+        }
+    }
+
+    fun saveBudgetItem() {
+        val state = _uiState.value
+        val sessionId = state.sessionId ?: requestedSessionId
+        if (sessionId == null || sessionId <= 0L) {
+            _uiState.update { it.copy(budgetErrorMessage = "Không tìm thấy chuyến đi.") }
+            return
+        }
+
+        val form = state.budgetForm
+        val amountVnd = parseBudgetAmount(form.amountText)
+        if (amountVnd == null) {
+            _uiState.update { it.copy(budgetErrorMessage = "Nhập chi phí lớn hơn 0.") }
+            return
+        }
+
+        val title = form.title.trim().ifBlank { form.category.label }
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isBudgetSaving = true,
+                    budgetErrorMessage = null
+                )
+            }
+
+            runCatching {
+                if (form.editingItemId == null) {
+                    chatRepository.addBudgetItem(
+                        sessionId = sessionId,
+                        category = form.category,
+                        title = title,
+                        amountVnd = amountVnd,
+                        note = form.note
+                    )
+                } else {
+                    chatRepository.updateBudgetItem(
+                        sessionId = sessionId,
+                        itemId = form.editingItemId,
+                        category = form.category,
+                        title = title,
+                        amountVnd = amountVnd,
+                        note = form.note
+                    )
+                }
+                chatRepository.getBudgetItems(sessionId)
+            }.onSuccess { budgetItems ->
+                _uiState.update {
+                    it.copy(
+                        budgetItems = budgetItems,
+                        budgetForm = BudgetFormState(),
+                        isBudgetSaving = false,
+                        budgetErrorMessage = null
+                    )
+                }
+            }.onFailure { throwable ->
+                _uiState.update {
+                    it.copy(
+                        isBudgetSaving = false,
+                        budgetErrorMessage = throwable.message ?: "Không thể lưu budget."
+                    )
+                }
+            }
+        }
+    }
+
+    fun editBudgetItem(item: BudgetItem) {
+        _uiState.update {
+            it.copy(
+                budgetForm = BudgetFormState(
+                    editingItemId = item.id,
+                    category = item.category,
+                    title = item.title,
+                    amountText = item.amountVnd.toString(),
+                    note = item.note
+                ),
+                budgetErrorMessage = null
+            )
+        }
+    }
+
+    fun cancelBudgetEdit() {
+        _uiState.update {
+            it.copy(
+                budgetForm = BudgetFormState(),
+                budgetErrorMessage = null
+            )
+        }
+    }
+
+    fun deleteBudgetItem(item: BudgetItem) {
+        val sessionId = _uiState.value.sessionId ?: requestedSessionId ?: return
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isBudgetSaving = true,
+                    budgetErrorMessage = null
+                )
+            }
+
+            runCatching {
+                chatRepository.deleteBudgetItem(sessionId = sessionId, itemId = item.id)
+                chatRepository.getBudgetItems(sessionId)
+            }.onSuccess { budgetItems ->
+                _uiState.update {
+                    it.copy(
+                        budgetItems = budgetItems,
+                        budgetForm = if (it.budgetForm.editingItemId == item.id) {
+                            BudgetFormState()
+                        } else {
+                            it.budgetForm
+                        },
+                        isBudgetSaving = false,
+                        budgetErrorMessage = null
+                    )
+                }
+            }.onFailure { throwable ->
+                _uiState.update {
+                    it.copy(
+                        isBudgetSaving = false,
+                        budgetErrorMessage = throwable.message ?: "Không thể xóa budget."
                     )
                 }
             }
@@ -94,6 +260,18 @@ data class ItineraryUiState(
     val title: String = "",
     val days: List<TripPlanDay> = emptyList(),
     val rawText: String = "",
+    val budgetItems: List<BudgetItem> = emptyList(),
+    val budgetForm: BudgetFormState = BudgetFormState(),
+    val budgetErrorMessage: String? = null,
+    val isBudgetSaving: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
+)
+
+data class BudgetFormState(
+    val editingItemId: Long? = null,
+    val category: BudgetCategory = BudgetCategory.FOOD,
+    val title: String = "",
+    val amountText: String = "",
+    val note: String = ""
 )

@@ -5,10 +5,13 @@ import com.travelai.data.api.DeepSeekApi
 import com.travelai.data.api.DeepSeekChatRequest
 import com.travelai.data.api.DeepSeekMessage
 import com.travelai.data.db.ChatDao
+import com.travelai.data.db.entities.BudgetItemEntity
 import com.travelai.data.db.entities.ChatMessageEntity
 import com.travelai.data.db.entities.ChatSessionEntity
 import com.travelai.data.db.entities.TripPlanSnapshotEntity
 import com.travelai.data.db.entities.TripProfileEntity
+import com.travelai.data.model.BudgetCategory
+import com.travelai.data.model.BudgetItem
 import com.travelai.data.model.TripPlanDay
 import com.travelai.data.model.TripPlanSnapshot
 import com.travelai.data.model.TripProfile
@@ -48,6 +51,7 @@ class ChatRepository @Inject constructor(
         val messages = chatDao.getMessagesForSession(session.id)
         val tripProfile = chatDao.getTripProfile(session.id)
         val tripPlanSnapshot = chatDao.getTripPlanSnapshot(session.id)
+        val budgetItems = chatDao.getBudgetItems(session.id)
 
         return StoredChatSession(
             id = session.id,
@@ -56,6 +60,7 @@ class ChatRepository @Inject constructor(
             updatedAt = session.updatedAt,
             tripProfile = tripProfile?.toTripProfile(),
             tripPlanSnapshot = tripPlanSnapshot?.toTripPlanSnapshot(gson),
+            budgetItems = budgetItems.map { it.toBudgetItem() },
             messages = messages.map {
                 StoredChatMessage(
                     role = it.role,
@@ -101,6 +106,67 @@ class ChatRepository @Inject constructor(
             )
         )
         chatDao.updateSessionUpdatedAt(sessionId, now)
+    }
+
+    suspend fun getBudgetItems(sessionId: Long): List<BudgetItem> =
+        chatDao.getBudgetItems(sessionId).map { it.toBudgetItem() }
+
+    suspend fun addBudgetItem(
+        sessionId: Long,
+        category: BudgetCategory,
+        title: String,
+        amountVnd: Long,
+        note: String
+    ): BudgetItem {
+        val now = System.currentTimeMillis()
+        val itemId = chatDao.insertBudgetItem(
+            BudgetItemEntity(
+                sessionId = sessionId,
+                category = category.name,
+                title = title.trim(),
+                amountVnd = amountVnd,
+                note = note.trim(),
+                createdAt = now,
+                updatedAt = now
+            )
+        )
+        chatDao.updateSessionUpdatedAt(sessionId, now)
+        return BudgetItem(
+            id = itemId,
+            sessionId = sessionId,
+            category = category,
+            title = title.trim(),
+            amountVnd = amountVnd,
+            note = note.trim(),
+            createdAt = now,
+            updatedAt = now
+        )
+    }
+
+    suspend fun updateBudgetItem(
+        sessionId: Long,
+        itemId: Long,
+        category: BudgetCategory,
+        title: String,
+        amountVnd: Long,
+        note: String
+    ) {
+        val now = System.currentTimeMillis()
+        chatDao.updateBudgetItem(
+            sessionId = sessionId,
+            itemId = itemId,
+            category = category.name,
+            title = title.trim(),
+            amountVnd = amountVnd,
+            note = note.trim(),
+            updatedAt = now
+        )
+        chatDao.updateSessionUpdatedAt(sessionId, now)
+    }
+
+    suspend fun deleteBudgetItem(sessionId: Long, itemId: Long) {
+        chatDao.deleteBudgetItem(sessionId = sessionId, itemId = itemId)
+        chatDao.updateSessionUpdatedAt(sessionId, System.currentTimeMillis())
     }
 
     suspend fun saveTripPlanSnapshot(
@@ -196,6 +262,7 @@ data class StoredChatSession(
     val updatedAt: Long,
     val tripProfile: TripProfile?,
     val tripPlanSnapshot: TripPlanSnapshot?,
+    val budgetItems: List<BudgetItem>,
     val messages: List<StoredChatMessage>
 )
 
@@ -242,3 +309,18 @@ private fun TripPlanSnapshot.toEntity(gson: Gson): TripPlanSnapshotEntity =
 private data class TripPlanSnapshotPayload(
     val days: List<TripPlanDay>
 )
+
+private fun BudgetItemEntity.toBudgetItem(): BudgetItem = BudgetItem(
+    id = id,
+    sessionId = sessionId,
+    category = category.toBudgetCategory(),
+    title = title,
+    amountVnd = amountVnd,
+    note = note,
+    createdAt = createdAt,
+    updatedAt = updatedAt
+)
+
+private fun String.toBudgetCategory(): BudgetCategory =
+    runCatching { BudgetCategory.valueOf(this) }
+        .getOrDefault(BudgetCategory.INCIDENTAL)

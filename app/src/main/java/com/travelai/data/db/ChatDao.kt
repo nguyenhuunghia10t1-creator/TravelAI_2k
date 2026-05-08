@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.travelai.data.db.entities.BudgetItemEntity
 import com.travelai.data.db.entities.ChatMessageEntity
 import com.travelai.data.db.entities.ChatSessionEntity
 import com.travelai.data.db.entities.TripPlanSnapshotEntity
@@ -29,6 +30,9 @@ interface ChatDao {
     @Query("SELECT * FROM trip_plan_snapshots WHERE sessionId = :sessionId LIMIT 1")
     suspend fun getTripPlanSnapshot(sessionId: Long): TripPlanSnapshotEntity?
 
+    @Query("SELECT * FROM budget_items WHERE sessionId = :sessionId ORDER BY createdAt ASC, id ASC")
+    suspend fun getBudgetItems(sessionId: Long): List<BudgetItemEntity>
+
     @Insert
     suspend fun insertSession(session: ChatSessionEntity): Long
 
@@ -40,6 +44,33 @@ interface ChatDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertTripPlanSnapshot(snapshot: TripPlanSnapshotEntity)
+
+    @Insert
+    suspend fun insertBudgetItem(item: BudgetItemEntity): Long
+
+    @Query(
+        """
+        UPDATE budget_items
+        SET category = :category,
+            title = :title,
+            amountVnd = :amountVnd,
+            note = :note,
+            updatedAt = :updatedAt
+        WHERE id = :itemId AND sessionId = :sessionId
+        """
+    )
+    suspend fun updateBudgetItem(
+        sessionId: Long,
+        itemId: Long,
+        category: String,
+        title: String,
+        amountVnd: Long,
+        note: String,
+        updatedAt: Long
+    )
+
+    @Query("DELETE FROM budget_items WHERE id = :itemId AND sessionId = :sessionId")
+    suspend fun deleteBudgetItem(sessionId: Long, itemId: Long)
 
     @Query("UPDATE chat_sessions SET updatedAt = :updatedAt WHERE id = :sessionId")
     suspend fun updateSessionUpdatedAt(sessionId: Long, updatedAt: Long)
