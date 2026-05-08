@@ -6,6 +6,9 @@ import com.travelai.data.api.DeepSeekMessage
 import com.travelai.data.db.ChatDao
 import com.travelai.data.db.entities.ChatMessageEntity
 import com.travelai.data.db.entities.ChatSessionEntity
+import com.travelai.data.db.entities.TripProfileEntity
+import com.travelai.data.model.TripProfile
+import com.travelai.data.model.toSessionTitle
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -36,12 +39,14 @@ class ChatRepository @Inject constructor(
 
     private suspend fun loadSessionFromEntity(session: ChatSessionEntity): StoredChatSession {
         val messages = chatDao.getMessagesForSession(session.id)
+        val tripProfile = chatDao.getTripProfile(session.id)
 
         return StoredChatSession(
             id = session.id,
             title = session.title,
             createdAt = session.createdAt,
             updatedAt = session.updatedAt,
+            tripProfile = tripProfile?.toTripProfile(),
             messages = messages.map {
                 StoredChatMessage(
                     role = it.role,
@@ -50,6 +55,19 @@ class ChatRepository @Inject constructor(
                 )
             }
         )
+    }
+
+    suspend fun createTripSession(profile: TripProfile): Long {
+        val now = System.currentTimeMillis()
+        val sessionId = chatDao.insertSession(
+            ChatSessionEntity(
+                title = profile.toSessionTitle(),
+                createdAt = now,
+                updatedAt = now
+            )
+        )
+        chatDao.insertTripProfile(profile.toEntity(sessionId = sessionId, createdAt = now))
+        return sessionId
     }
 
     suspend fun createSession(firstMessage: String): Long {
@@ -114,11 +132,37 @@ class ChatRepository @Inject constructor(
     }
 }
 
+private fun TripProfileEntity.toTripProfile(): TripProfile = TripProfile(
+    destination = destination,
+    days = days,
+    budget = budget,
+    people = people,
+    travelStyle = travelStyle,
+    transport = transport,
+    note = note
+)
+
+private fun TripProfile.toEntity(
+    sessionId: Long,
+    createdAt: Long
+): TripProfileEntity = TripProfileEntity(
+    sessionId = sessionId,
+    destination = destination.trim(),
+    days = days,
+    budget = budget.trim(),
+    people = people,
+    travelStyle = travelStyle.trim(),
+    transport = transport.trim(),
+    note = note.trim(),
+    createdAt = createdAt
+)
+
 data class StoredChatSession(
     val id: Long,
     val title: String,
     val createdAt: Long,
     val updatedAt: Long,
+    val tripProfile: TripProfile?,
     val messages: List<StoredChatMessage>
 )
 

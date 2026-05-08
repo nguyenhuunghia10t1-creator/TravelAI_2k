@@ -68,11 +68,14 @@ app/src/main/java/com/travelai/
 │   │   ├── DeepSeekModels.kt      # data class Request, Response, Message, Choice
 │   │   └── ApiClient.kt           # OkHttp singleton + Retrofit builder
 │   ├── db/
-│   │   ├── AppDatabase.kt         # Room @Database, version 1
+│   │   ├── AppDatabase.kt         # Room @Database, version 2
 │   │   ├── ChatDao.kt             # @Dao queries
 │   │   └── entities/
 │   │       ├── ChatSession.kt     # @Entity
-│   │       └── ChatMessage.kt     # @Entity
+│   │       ├── ChatMessage.kt     # @Entity
+│   │       └── TripProfileEntity.kt # @Entity trip profile theo session
+│   ├── model/
+│   │   └── TripProfile.kt         # Domain model + prompt helpers cho planner
 │   └── repository/
 │       └── ChatRepository.kt      # inject ApiClient + Dao, expose suspend fun
 ├── ui/
@@ -86,7 +89,7 @@ app/src/main/java/com/travelai/
 │   │   ├── HistoryScreen.kt
 │   │   └── HistoryViewModel.kt
 │   ├── navigation/
-│   │   └── NavGraph.kt            # NavHost, routes: "chat", "history"
+│   │   └── NavGraph.kt            # NavHost, routes: "planner", "chat", "history"
 │   └── theme/
 │       └── Theme.kt               # MaterialTheme, colors, typography
 ├── di/
@@ -148,6 +151,8 @@ app/src/main/java/com/travelai/
 - **Session** — 1 cuộc chat về 1 chuyến đi (vd: "3 ngày Đà Nẵng"). KHÔNG phải
   auth session.
 - **Message** — 1 tin nhắn trong session, có role "user" hoặc "assistant".
+- **Trip profile** — dữ liệu form tạo chuyến đi, lưu local theo `sessionId` để
+  tạo title và đưa context vào prompt DeepSeek.
 - **Lịch trình** — output AI format ngày/buổi. Là Message, không phải entity riêng.
 - **System prompt** — instruction gửi kèm mỗi API call để AI "biết" mình là
   trợ lý du lịch. Xem `Constants.kt`.

@@ -136,15 +136,15 @@
     - [x] Form validate các trường quan trọng, không crash khi bỏ trống optional
     - [x] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
 
-- [ ] **TASK-013** — Trip profile prompt integration
+- [x] **TASK-013** — Trip profile prompt integration
   - **Why:** DeepSeek cần nhận thông tin chuyến đi có cấu trúc để lập lịch trình sát nhu cầu.
   - **What:** Tích hợp trip profile vào prompt, tạo session từ form, lưu trip profile local, vẫn chat tiếp multi-turn.
   - **Touches:** `ChatViewModel.kt`, `ChatRepository.kt`, `ChatDao.kt`, `TripProfile.kt`, `Constants.kt`
   - **Acceptance:**
-    - [ ] User tạo chuyến đi từ form -> AI trả lịch trình theo đúng thông tin
-    - [ ] Session title ưu tiên điểm đến / số ngày từ trip profile
-    - [ ] Mở lại session vẫn chat tiếp được
-    - [ ] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
+    - [x] User tạo chuyến đi từ form -> AI trả lịch trình theo đúng thông tin
+    - [x] Session title ưu tiên điểm đến / số ngày từ trip profile
+    - [x] Mở lại session vẫn chat tiếp được
+    - [x] `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` pass
 
 - [ ] **TASK-014** — Structured itinerary parser and storage
   - **Why:** Lịch trình nên được hiển thị theo ngày/buổi, không chỉ là text chat.

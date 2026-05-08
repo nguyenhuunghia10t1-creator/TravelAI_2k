@@ -35,15 +35,15 @@ import com.travelai.ui.theme.TravelAITheme
 fun TripPlannerScreen(
     onOpenChat: () -> Unit,
     onOpenHistory: () -> Unit,
-    onCreateItinerary: (String) -> Unit,
+    onCreateItinerary: (Long) -> Unit,
     viewModel: TripPlannerViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(uiState.submittedPrompt) {
-        val prompt = uiState.submittedPrompt ?: return@LaunchedEffect
-        onCreateItinerary(prompt)
-        viewModel.consumeSubmittedPrompt()
+    LaunchedEffect(uiState.createdSessionId) {
+        val sessionId = uiState.createdSessionId ?: return@LaunchedEffect
+        onCreateItinerary(sessionId)
+        viewModel.consumeCreatedSessionId()
     }
 
     TripPlannerContent(
@@ -98,12 +98,13 @@ private fun TripPlannerContent(
             ) {
                 Button(
                     onClick = onCreateTrip,
+                    enabled = !uiState.isCreating,
                     modifier = Modifier
                         .fillMaxWidth()
                         .navigationBarsPadding()
                         .padding(16.dp)
                 ) {
-                    Text("Tạo lịch trình")
+                    Text(if (uiState.isCreating) "Đang tạo..." else "Tạo lịch trình")
                 }
             }
         }

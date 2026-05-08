@@ -1,15 +1,22 @@
 package com.travelai.ui.planner
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.travelai.data.model.TripProfile
+import com.travelai.data.repository.ChatRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class TripPlannerViewModel @Inject constructor() : ViewModel() {
+class TripPlannerViewModel @Inject constructor(
+    private val chatRepository: ChatRepository
+) : ViewModel() {
     private val _uiState = MutableStateFlow(TripPlannerUiState())
     val uiState: StateFlow<TripPlannerUiState> = _uiState.asStateFlow()
 
@@ -29,6 +36,7 @@ class TripPlannerViewModel @Inject constructor() : ViewModel() {
 
     fun createTrip() {
         val state = _uiState.value
+        if (state.isCreating) return
 
         val validationError = state.validationError()
         if (validationError != null) {
@@ -36,20 +44,46 @@ class TripPlannerViewModel @Inject constructor() : ViewModel() {
             return
         }
 
+        val profile = state.toTripProfile()
         _uiState.update {
             it.copy(
                 errorMessage = null,
-                submittedPrompt = state.toPlannerPrompt()
+                isCreating = true,
+                createdSessionId = null
             )
+        }
+
+        viewModelScope.launch {
+            try {
+                val sessionId = chatRepository.createTripSession(profile)
+                _uiState.update {
+                    it.copy(
+                        isCreating = false,
+                        createdSessionId = sessionId,
+                        errorMessage = null
+                    )
+                }
+            } catch (throwable: Throwable) {
+                if (throwable is CancellationException) throw throwable
+                _uiState.update {
+                    it.copy(
+                        isCreating = false,
+                        createdSessionId = null,
+                        errorMessage = throwable.message ?: "Không thể tạo chuyến đi. Vui lòng thử lại."
+                    )
+                }
+            }
         }
     }
 
-    fun consumeSubmittedPrompt() {
-        _uiState.update { it.copy(submittedPrompt = null) }
+    fun consumeCreatedSessionId() {
+        _uiState.update { it.copy(createdSessionId = null) }
     }
 
     private fun updateField(reducer: TripPlannerUiState.() -> TripPlannerUiState) {
-        _uiState.update { it.reducer().copy(submittedPrompt = null) }
+        _uiState.update {
+            it.reducer().copy(createdSessionId = null)
+        }
     }
 }
 
@@ -62,7 +96,8 @@ data class TripPlannerUiState(
     val transport: String = "Đi bộ, taxi hoặc xe công nghệ",
     val note: String = "",
     val errorMessage: String? = null,
-    val submittedPrompt: String? = null
+    val isCreating: Boolean = false,
+    val createdSessionId: Long? = null
 )
 
 private fun TripPlannerUiState.validationError(): String? {
@@ -77,29 +112,12 @@ private fun TripPlannerUiState.validationError(): String? {
     }
 }
 
-private fun TripPlannerUiState.toPlannerPrompt(): String = buildString {
-    appendLine("Hãy lập lịch trình du lịch chi tiết theo ngày và buổi cho chuyến đi sau:")
-    appendLine("- Điểm đến: ${destination.trim()}")
-    appendLine("- Số ngày: ${days.toIntOrNull() ?: 1}")
-    appendLine("- Số người: ${people.toIntOrNull() ?: 1}")
-    appendOptionalLine("Ngân sách", budget)
-    appendOptionalLine("Phong cách", travelStyle)
-    appendOptionalLine("Phương tiện", transport)
-    appendOptionalLine("Ghi chú", note)
-    appendLine()
-    appendLine("Yêu cầu trả lời:")
-    appendLine("- Chia rõ Ngày 1, Ngày 2... và Sáng / Chiều / Tối.")
-    appendLine("- Gợi ý địa điểm, món ăn, thời lượng và thứ tự di chuyển hợp lý.")
-    appendLine("- Nêu lưu ý chi phí phù hợp với ngân sách nếu có.")
-    append("- Trả lời thực tế, dễ làm theo, bằng tiếng Việt.")
-}
-
-private fun StringBuilder.appendOptionalLine(
-    label: String,
-    value: String
-) {
-    val trimmedValue = value.trim()
-    if (trimmedValue.isNotBlank()) {
-        appendLine("- $label: $trimmedValue")
-    }
-}
+private fun TripPlannerUiState.toTripProfile(): TripProfile = TripProfile(
+    destination = destination.trim(),
+    days = days.toIntOrNull() ?: 1,
+    budget = budget.trim(),
+    people = people.toIntOrNull() ?: 1,
+    travelStyle = travelStyle.trim(),
+    transport = transport.trim(),
+    note = note.trim()
+)

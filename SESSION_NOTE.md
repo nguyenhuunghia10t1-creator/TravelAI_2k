@@ -146,3 +146,16 @@
 - Files created: `TripPlannerScreen.kt`, `TripPlannerViewModel.kt`, `TripPlannerViewModelTest.kt`.
 - Verified `:app:assembleDebug`, `:app:testDebugUnitTest`, and `:app:lintDebug` passed using Android Studio JBR.
 - Gradle emitted the existing `LocalClipboardManager` deprecation warning in `ChatScreen.kt`; lint still passed.
+
+# 2026-05-08 - TASK-013 Trip profile prompt integration
+
+- Added `TripProfile` domain model with initial prompt/session title/profile context helpers.
+- Added `TripProfileEntity`, Room database version 2, migration `MIGRATION_1_2`, and exported schema `app/schemas/com.travelai.data.db.AppDatabase/2.json`.
+- Extended `ChatDao` and `ChatRepository` so a planner-created session stores and reloads its trip profile locally.
+- Updated planner flow so form submission creates a real chat session first, then opens Chat with `sessionId` and `autoStart=true`.
+- Updated `ChatViewModel` to auto-send the first trip prompt for a new profile session and include profile context in later DeepSeek calls for multi-turn chat.
+- Replaced the old prompt-draft unit test with `TripProfileTest` covering title, initial prompt, and profile context formatting.
+- Files edited: `TASKS.md`, `AGENTS.md`, `AppDatabase.kt`, `ChatDao.kt`, `ChatRepository.kt`, `AppModule.kt`, `ChatViewModel.kt`, `NavGraph.kt`, `TripPlannerScreen.kt`, `TripPlannerViewModel.kt`.
+- Files created: `TripProfile.kt`, `TripProfileEntity.kt`, `TripProfileTest.kt`, `app/schemas/com.travelai.data.db.AppDatabase/2.json`.
+- Files removed: `TripPlannerViewModelTest.kt`.
+- Verified `:app:assembleDebug`, `:app:testDebugUnitTest`, and `:app:lintDebug` passed using Android Studio JBR.

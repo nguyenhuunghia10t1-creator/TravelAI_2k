@@ -7,6 +7,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.travelai.data.api.DeepSeekMessage
+import com.travelai.data.model.TripProfile
+import com.travelai.data.model.toInitialPrompt
+import com.travelai.data.model.toPromptContext
 import com.travelai.data.repository.ChatRepository
 import com.travelai.data.repository.StoredChatMessage
 import com.travelai.util.Constants
@@ -35,6 +38,7 @@ class ChatViewModel @Inject constructor(
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
     private var currentSessionId: Long? = null
+    private var currentTripProfile: TripProfile? = null
     private var pendingRetry: PendingRetry? = null
     private val requestedSessionId: Long? = savedStateHandle
         .get<String>(SESSION_ID_ARG)
@@ -44,6 +48,9 @@ class ChatViewModel @Inject constructor(
         .get<String>(DRAFT_PROMPT_ARG)
         ?.trim()
         ?.takeIf { it.isNotBlank() }
+    private val shouldAutoStartTrip: Boolean = savedStateHandle
+        .get<Boolean>(AUTO_START_ARG)
+        ?: false
 
     init {
         if (draftPrompt != null) {
@@ -212,16 +219,25 @@ class ChatViewModel @Inject constructor(
                     _uiState.value.messages.isEmpty() &&
                     !_uiState.value.isLoading
                 ) {
+                    val loadedMessages = session.messages.mapNotNull { message ->
+                        message.toChatMessage()
+                    }
                     currentSessionId = session.id
+                    currentTripProfile = session.tripProfile
                     _uiState.update {
                         it.copy(
-                            messages = session.messages.mapNotNull { message ->
-                                message.toChatMessage()
-                            },
+                            messages = loadedMessages,
                             errorMessage = null,
                             canRetry = false,
                             offlineBannerMessage = null
                         )
+                    }
+                    if (
+                        shouldAutoStartTrip &&
+                        loadedMessages.isEmpty() &&
+                        session.tripProfile != null
+                    ) {
+                        startTripFromProfile(session.tripProfile)
                     }
                 }
             }.onFailure { throwable ->
@@ -235,6 +251,12 @@ class ChatViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun startTripFromProfile(profile: TripProfile) {
+        if (_uiState.value.messages.isNotEmpty() || _uiState.value.isLoading) return
+        _uiState.update { it.copy(inputText = profile.toInitialPrompt()) }
+        sendMessage()
     }
 
     private suspend fun requestAssistantResponse(messages: List<DeepSeekMessage>): String =
@@ -272,16 +294,23 @@ class ChatViewModel @Inject constructor(
 
     private fun buildDeepSeekMessages(messages: List<ChatMessage>): List<DeepSeekMessage> {
         val conversationMessages = messages.map { it.toDeepSeekMessage() }
+        val systemPrompt = currentTripProfile?.let { profile ->
+            Constants.SYSTEM_PROMPT + "\n\n" + profile.toPromptContext()
+        } ?: Constants.SYSTEM_PROMPT
+
         return listOf(
             DeepSeekMessage(
                 role = ROLE_SYSTEM,
-                content = Constants.SYSTEM_PROMPT
+                content = systemPrompt
             )
-        ) + trimContextMessages(conversationMessages)
+        ) + trimContextMessages(conversationMessages, systemPrompt.length)
     }
 
-    private fun trimContextMessages(messages: List<DeepSeekMessage>): List<DeepSeekMessage> {
-        var totalChars = Constants.SYSTEM_PROMPT.length
+    private fun trimContextMessages(
+        messages: List<DeepSeekMessage>,
+        systemPromptLength: Int
+    ): List<DeepSeekMessage> {
+        var totalChars = systemPromptLength
         val keptReversed = mutableListOf<DeepSeekMessage>()
 
         for (message in messages.asReversed()) {
@@ -395,6 +424,7 @@ private const val ROLE_USER = "user"
 private const val ROLE_ASSISTANT = "assistant"
 private const val SESSION_ID_ARG = "sessionId"
 private const val DRAFT_PROMPT_ARG = "draftPrompt"
+private const val AUTO_START_ARG = "autoStart"
 private const val API_RESPONSE_TIMEOUT_MS = 15_000L
 private const val TIMEOUT_MESSAGE = "Không phản hồi, thử lại?"
 private const val OFFLINE_MESSAGE = "Không có kết nối internet. Kiểm tra mạng rồi thử lại."

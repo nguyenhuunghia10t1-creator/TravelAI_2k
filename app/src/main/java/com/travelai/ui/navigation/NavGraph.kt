@@ -35,8 +35,13 @@ fun NavGraph(
                         launchSingleTop = true
                     }
                 },
-                onCreateItinerary = { draftPrompt ->
-                    navController.navigate(TravelAiRoutes.chatRoute(draftPrompt = draftPrompt))
+                onCreateItinerary = { sessionId ->
+                    navController.navigate(
+                        TravelAiRoutes.chatRoute(
+                            sessionId = sessionId,
+                            autoStart = true
+                        )
+                    )
                 }
             )
         }
@@ -66,6 +71,10 @@ fun NavGraph(
                 navArgument(TravelAiRoutes.DRAFT_PROMPT_ARG) {
                     type = NavType.StringType
                     defaultValue = ""
+                },
+                navArgument(TravelAiRoutes.AUTO_START_ARG) {
+                    type = NavType.BoolType
+                    defaultValue = false
                 }
             )
         ) {
@@ -104,18 +113,23 @@ private object TravelAiRoutes {
     const val HISTORY_ROUTE = "history"
     const val SESSION_ID_ARG = "sessionId"
     const val DRAFT_PROMPT_ARG = "draftPrompt"
+    const val AUTO_START_ARG = "autoStart"
     const val CHAT_ROUTE_WITH_ARGS =
-        "$CHAT_ROUTE?$SESSION_ID_ARG={$SESSION_ID_ARG}&$DRAFT_PROMPT_ARG={$DRAFT_PROMPT_ARG}"
+        "$CHAT_ROUTE?$SESSION_ID_ARG={$SESSION_ID_ARG}&$DRAFT_PROMPT_ARG={$DRAFT_PROMPT_ARG}&$AUTO_START_ARG={$AUTO_START_ARG}"
 
     fun chatRoute(
         sessionId: Long? = null,
-        draftPrompt: String? = null
+        draftPrompt: String? = null,
+        autoStart: Boolean = false
     ): String {
         val arguments = buildList {
             sessionId?.let { add("$SESSION_ID_ARG=$it") }
             draftPrompt
                 ?.takeIf { it.isNotBlank() }
                 ?.let { add("$DRAFT_PROMPT_ARG=${Uri.encode(it)}") }
+            if (autoStart) {
+                add("$AUTO_START_ARG=true")
+            }
         }
         return if (arguments.isEmpty()) {
             CHAT_ROUTE
